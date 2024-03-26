@@ -1,9 +1,9 @@
 import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from nltk.corpus import stopwords
 
 # Ensure you've downloaded the necessary NLTK data
 nltk.download('punkt')
