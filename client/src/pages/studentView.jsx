@@ -31,7 +31,7 @@ const StudentDashboard = () => {
 			const fetchConvoMessages = async () => {
 				try {
 					const response = await fetch(
-						`http://localhost:5000/conversations/${activeConvo}/messages`,
+						`http://localhost:5001/conversations/${activeConvo}/messages`,
 						{
 							method: 'GET',
 							credentials: 'include',
@@ -54,7 +54,7 @@ const StudentDashboard = () => {
 
 	const newConvo = async () => {
 		const response = await axios.post(
-			'http://localhost:5000/conversation',
+			'http://localhost:5001/conversation',
 			{
 				id: 1,
 				user: userEmail,
@@ -68,7 +68,7 @@ const StudentDashboard = () => {
 	};
 
 	const signOut = async () => {
-		const response = await axios.post('http://localhost:5000/users/logout', {
+		const response = await axios.post('http://localhost:5001/users/logout', {
 			email: email,
 			password: password,
 		});
@@ -77,7 +77,7 @@ const StudentDashboard = () => {
 	useEffect(() => {
 		const fetchConversations = async () => {
 			try {
-				const response = await fetch('http://localhost:5000/conversations', {
+				const response = await fetch('http://localhost:5001/conversations', {
 					method: 'GET',
 					credentials: 'include',
 				});
@@ -116,7 +116,7 @@ const StudentDashboard = () => {
 
 		const fetchEmail = async () => {
 			try {
-				const response = await fetch('http://localhost:5000/users/profile', {
+				const response = await fetch('http://localhost:5001/users/profile', {
 					method: 'GET',
 					credentials: 'include',
 				});

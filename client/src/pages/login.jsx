@@ -9,14 +9,14 @@ const LoginPage = () => {
     const handleLogin = async (event) => {
         try {
             event.preventDefault();
-            await axios.post('http://localhost:5000/users/login', {
+            await axios.post('http://localhost:5001/users/login', {
               email: email,
               password: password,
             }, {
               withCredentials: true
             });
             alert("Login Succesful");
-            const response = await axios.post('http://localhost:5000/users/role', {
+            const response = await axios.post('http://localhost:5001/users/role', {
                 email: email,
             });
             const role = response.data;

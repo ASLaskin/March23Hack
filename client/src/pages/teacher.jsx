@@ -14,7 +14,7 @@ const TeacherDashboard = () => {
 
 	const fetchConversations = async () => {
 		try {
-			const response = await axios.get('http://localhost:5000/conversations');
+			const response = await axios.get('http://localhost:5001/conversations');
 			setConversations(response.data);
 		} catch (error) {
 			console.error('Error fetching conversations:', error);
@@ -30,7 +30,7 @@ const TeacherDashboard = () => {
 	};
 
 	const signOut = async () => {
-		const response = await axios.post('http://localhost:5000/users/logout', {
+		const response = await axios.post('http://localhost:5001/users/logout', {
 			name: email,
 			password: password,
 		});
@@ -40,7 +40,7 @@ const TeacherDashboard = () => {
 	useEffect(() => {
 		const fetchEmail = async () => {
 			try {
-				const response = await fetch('http://localhost:5000/users/profile', {
+				const response = await fetch('http://localhost:5001/users/profile', {
 					method: 'GET',
 					credentials: 'include',
 				});

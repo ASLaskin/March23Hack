@@ -163,7 +163,7 @@ app.post('/users/role', async (req, res) => {
 	}
 });
 
-app.post('/conversation', async (req, res) => {
+app.post('conversation', async (req, res) => {
 	try {
 		if (!req.session.userId) {
 			return res.status(401).send('Unauthorized');
