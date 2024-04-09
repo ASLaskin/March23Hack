@@ -35,17 +35,4 @@ POST http://localhost:5001/users/logout
 
 ###
 
-//conversation
-POST http://localhost:5001/conversation
-Content-Type: application/json
 
-{
-    "id": 1,
-    "user": "admin",
-    "text": "help!!"
-}
-
-###
-
-GET http://localhost:5001/conversations/65ffd4ab07b3623ae80dfcff/messages
-Content-Type: application/json

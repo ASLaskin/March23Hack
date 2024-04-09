@@ -35,28 +35,22 @@ mongoose
 
 const db = mongoose.connection;
 
-const messageSchema = new mongoose.Schema({
-	user: String,
-	text: String,
-	timestamp: { type: Date, default: Date.now },
-});
-
-const conversationSchema = new mongoose.Schema({
-	id: { type: Number },
-	user: String,
-	messages: [messageSchema],
-});
 
 const userSchema = new mongoose.Schema({
 	email: String,
 	password: String,
 	role: String,
-	conversations: [conversationSchema],
+	conversationsIDs: Array,
 });
+
+const conversationSchema = new mongoose.Schema({
+	messages: Array,
+	users: Array,
+	timestamps: Array
+})
 
 const User = mongoose.model('User', userSchema);
 const Conversation = mongoose.model('Conversation', conversationSchema);
-const Message = mongoose.model('Message', messageSchema);
 
 app.use(
 	session({
@@ -85,6 +79,7 @@ app.post('/users', async (req, res) => {
 			email: req.body.email,
 			password: hashedPassword,
 			role: req.body.role,
+			conversationsIDs: []
 		});
 		await newUser.save();
 		res.status(201).send();
@@ -163,102 +158,6 @@ app.post('/users/role', async (req, res) => {
 	}
 });
 
-app.post('conversation', async (req, res) => {
-	try {
-		if (!req.session.userId) {
-			return res.status(401).send('Unauthorized');
-		}
-		const user = await User.findById(req.session.userId);
-		const conversation = new Conversation({
-			id: req.body.id,
-			user: req.body.user,
-		});
-		const message = new Message({
-			text: req.body.text,
-			user: req.body.user,
-		});
-
-		await message.save();
-		console.log('\nconversation:');
-		console.log(conversation);
-
-		conversation.messages.push(message);
-		await conversation.save();
-		console.log('\nconversation:');
-		console.log(conversation);
-
-		user.conversations.push(conversation);
-		console.log('\nuser.conversations[0]:');
-		console.log(user.conversations[0].messages);
-		await user.save();
-		// console.log(user.conversations[0]);
-
-		res.status(201).send();
-	} catch (error) {
-		console.error(error);
-		res.status(500).send('Internal Server Error');
-	}
-});
-
-app.post('/message', async (req, res) => {
-	try {
-		if (!req.session.userId) {
-			return res.status(401).send('Unauthorized');
-		}
-		const user = await User.findById(req.session.userId);
-	} catch (error) {
-		console.error(error);
-		res.status(500).send('Internal Server Error');
-	}
-});
-
-app.get('/conversations', async (req, res) => {
-	try {
-		if (req.session && req.session.userId) {
-			const user = await User.findById(req.session.userId);
-			if (user) {
-				res.json({ conversations: user.conversations });
-			} else {
-				res.status(404).send('User not found');
-			}
-		} else {
-			res.status(401).send('Unauthorized');
-		}
-	} catch (error) {
-		console.error(error);
-		res.status(500).send('Internal Server Error');
-	}
-});
-
-app.get('/conversations/:id/messages', async (req, res) => {
-	try {
-    const conversationId = req.params.id; 
-		const conversation = await Conversation.findById(conversationId);
-
-    console.log(conversationId);
-
-		if (!conversation) {
-			return res.status(404).json({ message: 'Conversation not found' });
-		}
-
-		const messages = conversation.messages;
-		res.json(messages);
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: 'Internal Server Error' });
-	}
-});
-
-app.get('/users/professors', async (req, res) => {
-	try {
-		const professors = await User.find({ role: 'professor' });
-		res.status(200).json(professors);
-	} catch (error) {
-		console.error('Error fetching professors:', error);
-		res.status(500).send('Internal Server Error');
-	}
-});
-
 app.get('/users/tas', async (req, res) => {
 	try {
 		const teacherAssistants = await User.find({ role: 'ta' });
@@ -267,6 +166,121 @@ app.get('/users/tas', async (req, res) => {
 		console.error('Error fetching teacher assistants:', error);
 		res.status(500).send('Internal Server Error');
 	}
+});
+app.get('/users/professors', async (req, res) => {
+	try {
+		const teacherAssistants = await User.find({ role: 'professor' });
+		res.status(200).json(teacherAssistants);
+	} catch (error) {
+		console.error('Error fetching teacher assistants:', error);
+		res.status(500).send('Internal Server Error');
+	}
+});
+
+//This creates the convo and then adds the ID to the users conversation array 
+app.post('/pushConversation', async (req, res) => {
+	try {
+	  const newConversation = new Conversation();
+	  await newConversation.save();
+	  const userId = req.session.userId; 
+	  if (!userId) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	  }
+  
+	  const user = await User.findById(userId);
+	  if (!user) {
+		return res.status(404).json({ error: 'User not found' });
+	  }
+  
+	  user.conversationsIDs.push(newConversation._id);
+	  await user.save();
+  
+	  res.status(201).json({ message: 'Conversation created successfully', conversationId: newConversation._id });
+	} catch (error) {
+	  console.error(error);
+	  res.status(500).json({ error: 'Internal Server Error' });
+	}
+  });
+
+//This pushes a message to a conversation 
+app.post('/pushMessage/:conversationId', async (req, res) => {
+	const conversationId = req.params.conversationId;
+	const { text, userId, timestamp } = req.body;
+  
+	try {
+	  const conversation = await Conversation.findById(conversationId);
+	  if (!conversation) {
+		return res.status(404).json({ error: 'Conversation not found' });
+	  }
+  
+	  // Push message, user, and timestamp into the conversation
+	  conversation.messages.push({ text, userId, timestamp });
+	  conversation.users.push(userId); 
+	  conversation.timestamps.push(timestamp);
+  
+	  await conversation.save();
+  
+	  res.status(201).json({ message: 'Message added to conversation successfully' });
+	} catch (error) {
+	  console.error(error);
+	  res.status(500).json({ error: 'Internal Server Error' });
+	}
+  });
+
+
+// Get the first message of each conversation for the current user
+app.get('/getConversations', async (req, res) => {
+	try {
+	  const userId = req.session.userId; 
+  
+	  if (!userId) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	  }
+  
+	  // Find user's conversations
+	  const user = await User.findById(userId);
+	  if (!user) {
+		return res.status(404).json({ error: 'User not found' });
+	  }
+  
+	  const userConversations = await Conversation.find({ _id: { $in: user.conversationsIDs } });
+  
+	  // Extract the first message of each conversation
+	  const firstMessages = userConversations.map(conv => {
+		if (conv.messages.length > 0) {
+		  return {
+			conversationId: conv._id,
+			firstMessage: conv.messages[0]
+		  };
+		} else {
+		  return {
+			conversationId: conv._id,
+			firstMessage: 'No messages in this conversation'
+		  };
+		}
+	  });
+  
+	  res.status(200).json({ firstMessages });
+	} catch (error) {
+	  console.error(error);
+	  res.status(500).json({ error: 'Internal Server Error' });
+	}
+  });
+  
+// Get the data within the conversation given its ID
+app.get('/conversationData/:conversationId', async (req, res) => {
+  const conversationId = req.params.conversationId;
+
+  try {
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    res.status(200).json({ conversation });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 const PORT = process.env.PORT || 5001;

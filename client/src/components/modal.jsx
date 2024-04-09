@@ -10,7 +10,7 @@ const Modal = ({ isOpen, onClose }) => {
     useEffect(() => {
         const fetchProfessors = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/users/professors');
+                const response = await axios.get('http://localhost:5001/users/professors');
                 setProfessors(response.data);
             } catch (error) {
                 console.error('Error fetching professors:', error);
@@ -18,7 +18,7 @@ const Modal = ({ isOpen, onClose }) => {
         };
         const fetchTeacherAssistants = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/users/tas');
+                const response = await axios.get('http://localhost:5001/users/tas');
                 setTeacherAssistants(response.data);
             }
             catch (error) {

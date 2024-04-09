@@ -7,7 +7,6 @@ const StudentDashboard = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
 	const [firstMessages, setFirstMessages] = useState([]);
-	const [messagesID, setMessagesID] = useState([]);
 	const [isActive, setIsActive] = useState(false);
 	const [activeConvo, setActiveConvo] = useState('');
 	const [convoMessages, setConvoMessages] = useState([]);
@@ -21,111 +20,56 @@ const StudentDashboard = () => {
 	};
 
 	const chatClick = (idx) => {
-		const conversationId = messagesID[idx][idx];
-		setIsActive(true);
-		setActiveConvo(conversationId);
+
 	};
 
-	useEffect(() => {
-		if (isActive) {
-			const fetchConvoMessages = async () => {
-				try {
-					const response = await fetch(
-						`http://localhost:5001/conversations/${activeConvo}/messages`,
-						{
-							method: 'GET',
-							credentials: 'include',
-						}
-					);
-					if (!response.ok) {
-						throw new Error('Failed to fetch conversation messages');
-					}
-					//TODO:This may be worth looking into ngl
-					const data = await response.json();
-					console.log(data.text);
-					setConvoMessages(data);
-				} catch (error) {
-					console.error('Error fetching conversation messages:', error);
-				}
-			};
-			fetchConvoMessages();
-		}
-	}, [isActive, activeConvo]);
-
 	const newConvo = async () => {
-		const response = await axios.post(
-			'http://localhost:5001/conversation',
-			{
-				id: 1,
-				user: userEmail,
-				text: textBoxValue,
-			},
-			{
-				withCredentials: true, // Include cookies in the request
-			}
-		);
-		console.log('done');
+		try {
+			const response = await axios.post(
+				'http://localhost:5001/pushConversation',
+				{},
+				{ withCredentials: true }
+			);
+			console.log(response);
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	const signOut = async () => {
-		const response = await axios.post('http://localhost:5001/users/logout', {
-			email: email,
-			password: password,
-		});
+		try {
+			const response = await axios.post(
+				'http://localhost:5001/users/logout',
+				{},
+				{ withCredentials: true }
+			);
+			console.log(response);
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	useEffect(() => {
 		const fetchConversations = async () => {
 			try {
-				const response = await fetch('http://localhost:5001/conversations', {
-					method: 'GET',
-					credentials: 'include',
-				});
-				if (!response.ok) {
-					throw new Error('Failed to fetch conversations');
-				}
-				const data = await response.json();
-
-				const messages = data.conversations.map((conversation) => {
-					if (conversation.messages && conversation.messages.length > 0) {
-						return {
-							text: conversation.messages[0].text,
-							// other properties you might want to access
-						};
-					} else {
-						return { text: '' }; // or any default value you prefer if there are no messages
-					}
-				});
-				const messagesID = data.conversations.map((conversation, index) => {
-					if (conversation.messages && conversation.messages.length > 0) {
-						return {
-							[index]: conversation._id,
-						};
-					} else {
-						return { [index]: '' };
-					}
-				});
-				setMessagesID(messagesID);
-				setFirstMessages(messages);
-				console.log('done with messages');
-				console.log(messages);
+				const response = await axios.get(
+					'http://localhost:5001/getConversations',
+					{ withCredentials: true }
+				);
+				console.log(response.data.firstMessages);
+				setFirstMessages(response.data.firstMessages);
 			} catch (error) {
-				console.error('Error fetching conversations:', error);
+				console.error(error);
 			}
 		};
 
 		const fetchEmail = async () => {
 			try {
-				const response = await fetch('http://localhost:5001/users/profile', {
-					method: 'GET',
-					credentials: 'include',
-				});
-				if (!response.ok) {
-					throw new Error('Failed to fetch email');
-				}
-				const data = await response.json();
-				setUserEmail(data.email);
-				console.log('done with email');
+				const response = await axios.get(
+					'http://localhost:5001/users/profile',
+					{ withCredentials: true }
+				);
+				setUserEmail(response.data.email);
 			} catch (error) {
 				console.error('Error fetching email:', error);
 			}
@@ -133,9 +77,6 @@ const StudentDashboard = () => {
 
 		fetchEmail();
 		fetchConversations();
-		return () => {
-			console.log('cleaning up');
-		};
 	}, []);
 
 	return (
@@ -231,8 +172,12 @@ const StudentDashboard = () => {
 					<ul className="space-y-2 font-medium">
 						<button onClick={newConvo}>New Conversation</button>
 						{firstMessages.map((conversation, idx) => (
-							<a key={idx} onClick={() => chatClick(idx)} className="hover:underline cursor-pointer">
-								<li>{conversation.text}</li>
+							<a
+								key={idx}
+								onClick={() => chatClick(idx)}
+								className="hover:underline cursor-pointer"
+							>
+								<li>{conversation.firstMessage}</li>
 							</a>
 						))}
 					</ul>
@@ -261,12 +206,13 @@ const StudentDashboard = () => {
 					<div>
 						<h1>Conversation Messages:</h1>
 						<ul>
-								<li >
-									<p>User: {convoMessages.user}</p>
-									<p>Text: {convoMessages.text}</p>
-									<p>Timestamp: {convoMessages.timestamp}</p>
+							{convoMessages.map((message, index) => (
+								<li key={index}>
+									<p>User: {message.userId}</p>
+									<p>Text: {message.text}</p>
+									<p>Timestamp: {message.timestamp}</p>
 								</li>
-	
+							))}
 						</ul>
 					</div>
 				</div>
