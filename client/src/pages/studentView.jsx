@@ -10,6 +10,7 @@ const StudentDashboard = () => {
 	const [isActive, setIsActive] = useState(false);
 	const [activeConvo, setActiveConvo] = useState('');
 	const [convoMessages, setConvoMessages] = useState([]);
+	const [convoUsers, setConvoUsers] = useState([]);
 
 	const submitText = () => {
 		setIsOpen(true);
@@ -19,7 +20,21 @@ const StudentDashboard = () => {
 		setIsOpen(false);
 	};
 
-	const chatClick = (idx) => {
+	const chatClick = async (idx) => {
+		try {
+			const response = await axios.get(
+				'http://localhost:5001/conversationData/' + firstMessages[idx].conversationId
+			);
+			console.log(response.data);
+			setIsActive(true);
+			setActiveConvo(firstMessages[idx].conversationId);
+			setConvoMessages(response.data.conversation.messages);
+			setConvoUsers(response.data.conversation.users);
+			console.log(response.data.conversation.messages);
+			console.log(convoMessages);
+		} catch (error) {
+			console.log(error);
+		}
 
 	};
 
@@ -208,9 +223,9 @@ const StudentDashboard = () => {
 						<ul>
 							{convoMessages.map((message, index) => (
 								<li key={index}>
-									<p>User: {message.userId}</p>
+									<p>User: {message.user}</p>
 									<p>Text: {message.text}</p>
-									<p>Timestamp: {message.timestamp}</p>
+									<p>Timestamp: {message.time}</p>
 								</li>
 							))}
 						</ul>

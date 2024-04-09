@@ -44,9 +44,11 @@ const userSchema = new mongoose.Schema({
 });
 
 const conversationSchema = new mongoose.Schema({
-	messages: Array,
-	users: Array,
-	timestamps: Array
+	messages: [{
+		text: String,
+		user: String,
+		time: Number,
+	}]
 })
 
 const User = mongoose.model('User', userSchema);
@@ -181,6 +183,11 @@ app.get('/users/professors', async (req, res) => {
 app.post('/pushConversation', async (req, res) => {
 	try {
 	  const newConversation = new Conversation();
+	  newConversation.messages.push({
+		text: "hi",
+		user: "student@ufl.edu",
+		time: 0
+	});
 	  await newConversation.save();
 	  const userId = req.session.userId; 
 	  if (!userId) {
@@ -215,8 +222,8 @@ app.post('/pushMessage/:conversationId', async (req, res) => {
   
 	  // Push message, user, and timestamp into the conversation
 	  conversation.messages.push({ text, userId, timestamp });
-	  conversation.users.push(userId); 
-	  conversation.timestamps.push(timestamp);
+	//   conversation.users.push(userId); 
+	//   conversation.timestamps.push(timestamp);
   
 	  await conversation.save();
   
@@ -250,7 +257,7 @@ app.get('/getConversations', async (req, res) => {
 		if (conv.messages.length > 0) {
 		  return {
 			conversationId: conv._id,
-			firstMessage: conv.messages[0]
+			firstMessage: conv.messages[0].text
 		  };
 		} else {
 		  return {
@@ -271,12 +278,14 @@ app.get('/getConversations', async (req, res) => {
 app.get('/conversationData/:conversationId', async (req, res) => {
   const conversationId = req.params.conversationId;
 
+
   try {
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     res.status(200).json({ conversation });
+	console.log(conversation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
