@@ -11,6 +11,7 @@ const StudentDashboard = () => {
 	const [activeConvo, setActiveConvo] = useState('');
 	const [convoMessages, setConvoMessages] = useState([]);
 	const [convoUsers, setConvoUsers] = useState([]);
+	const [response, setResponse] = useState('');
 
 	const submitText = () => {
 		setIsOpen(true);
@@ -18,6 +19,17 @@ const StudentDashboard = () => {
 
 	const closeModal = () => {
 		setIsOpen(false);
+	};
+
+	const sendRequest = async () => {
+		try {
+			const userQuestion = "How many credits is this course worth"; // Your user question here
+			const response = await axios.post('http://localhost:5000/predict', userQuestion);
+			console.log('Response from server:', response.data);
+			setResponse(response.data); // Set the response in state for rendering
+		} catch (error) {
+			console.error('Error:', error);
+		}
 	};
 
 	const chatClick = async (idx) => {
@@ -231,6 +243,7 @@ const StudentDashboard = () => {
 						</ul>
 					</div>
 				</div>
+				<button onClick={sendRequest}>Send Predict Request</button>
 			</div>
 			<Modal isOpen={isOpen} onClose={closeModal} />
 		</>

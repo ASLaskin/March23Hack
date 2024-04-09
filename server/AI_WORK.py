@@ -9,10 +9,12 @@ from nltk.corpus import stopwords
 nltk.download('punkt')
 nltk.download('stopwords')
 
-# Load and preprocess dataset
+# Load dataset
 df = pd.read_csv('questions_dataset.csv')
 stop_words = set(stopwords.words('english'))
 
+# Initialize CountVectorizer outside the function to reuse the vocabulary
+vectorizer = CountVectorizer()
 
 # Preprocess the text
 def preprocess_text(text):
@@ -20,12 +22,8 @@ def preprocess_text(text):
     stripped_words = [word for word in words if word.lower() not in stop_words]
     return " ".join(stripped_words)
 
-
 # Preprocess all questions
 preprocessed_questions = [preprocess_text(question) for question in df['Question'].tolist()]
-
-# Initialize and fit CountVectorizer
-vectorizer = CountVectorizer()
 questions_vectors = vectorizer.fit_transform(preprocessed_questions)
 
 
@@ -49,6 +47,6 @@ def generate_answer(user_question):
 
 
 # Example usage
-user_question = ""
+user_question = "What is machine learning?"
 answer = generate_answer(user_question)
 print(answer)
