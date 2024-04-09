@@ -221,9 +221,11 @@ app.post('/pushMessage/:conversationId', async (req, res) => {
 	  }
   
 	  // Push message, user, and timestamp into the conversation
-	  conversation.messages.push({ text, userId, timestamp });
-	//   conversation.users.push(userId); 
-	//   conversation.timestamps.push(timestamp);
+	  conversation.messages.push({
+		text: text,
+		userId: userId,
+		time: timestamp
+	  });
   
 	  await conversation.save();
   
