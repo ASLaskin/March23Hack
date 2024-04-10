@@ -22,7 +22,6 @@ const SignUpPage = () => {
 			if(response.status == 202) {
 				alert('Email is already taken');
 			} else {
-				alert('Registration successful!');
 				window.location.href = '/login';
 			}
 

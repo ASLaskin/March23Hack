@@ -7,13 +7,43 @@ const StudentDashboard = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
 	const [firstMessages, setFirstMessages] = useState([]);
-	const [isActive, setIsActive] = useState(false);
-	const [activeConvo, setActiveConvo] = useState('');
 	const [convoMessages, setConvoMessages] = useState([]);
-	const [convoUsers, setConvoUsers] = useState([]);
+	const [newConvoOrMess, setnewConvoOrMess] = useState([true]);
+	const [activeID, setactiveID] = useState();
 
-	const submitText = () => {
-		setIsOpen(true);
+	const submitText = async () => {
+		//This is for model we should make it open after AI response
+		//setIsOpen(true);
+		const userText = textBoxValue;
+
+		//if its true we make a new convo false we make it a message 
+		if (newConvoOrMess == true) {
+			try {
+				const response = await axios.post(
+					'/pushConversation',
+					{
+						text: userText,
+					},
+					{ withCredentials: true }
+				);
+				console.log(response.data);
+			} catch (error) {
+				console.error('Error:', error);
+			}
+		} else {
+			try {
+				const response = await axios.post(
+					'/pushMessage/' + activeID,
+					{
+						text: userText,
+					},
+					{ withCredentials: true }
+				);
+				console.log(response.data);
+			} catch (error) {
+				console.error('Error', error);
+			}
+		}
 	};
 
 	const closeModal = () => {
@@ -23,32 +53,24 @@ const StudentDashboard = () => {
 	const chatClick = async (idx) => {
 		try {
 			const response = await axios.get(
-				'http://localhost:5001/conversationData/' + firstMessages[idx].conversationId
+				'http://localhost:5001/conversationData/' +
+					firstMessages[idx].conversationId
 			);
 			console.log(response.data);
-			setIsActive(true);
-			setActiveConvo(firstMessages[idx].conversationId);
+			setactiveID(firstMessages[idx].conversationId);
 			setConvoMessages(response.data.conversation.messages);
-			setConvoUsers(response.data.conversation.users);
+			setnewConvoOrMess(false);
 			console.log(response.data.conversation.messages);
 			console.log(convoMessages);
 		} catch (error) {
 			console.log(error);
 		}
-
 	};
 
-	const newConvo = async () => {
-		try {
-			const response = await axios.post(
-				'http://localhost:5001/pushConversation',
-				{},
-				{ withCredentials: true }
-			);
-			console.log(response);
-		} catch (error) {
-			console.error(error);
-		}
+	//makes new conversation so clears the screen and primes to send in a new convo
+	const makeNew = () => {
+		setConvoMessages([]);
+		setnewConvoOrMess(true);
 	};
 
 	const signOut = async () => {
@@ -185,7 +207,7 @@ const StudentDashboard = () => {
 			>
 				<div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
 					<ul className="space-y-2 font-medium">
-						<button onClick={newConvo}>New Conversation</button>
+						<button onClick={makeNew}>New Conversation</button>
 						{firstMessages.map((conversation, idx) => (
 							<a
 								key={idx}
