@@ -11,7 +11,7 @@ const StudentDashboard = () => {
 	const [userEmail, setUserEmail] = useState('');
 	const [firstMessages, setFirstMessages] = useState([]);
 	const [convoMessages, setConvoMessages] = useState([]);
-	const [newConvoOrMess, setnewConvoOrMess] = useState([true]);
+	const [newConvo, setNewConvo] = useState(true);
 	const [activeID, setactiveID] = useState();
 
 	const submitText = async () => {
@@ -20,23 +20,24 @@ const StudentDashboard = () => {
 		const userText = textBoxValue;
 
 		//if its true we make a new convo false we make it a message
-		if (newConvoOrMess == true) {
+		if (newConvo == true) {
 			try {
 				const response = await axios.post(
-					'/pushConversation',
+					'http://localhost:5001/pushConversation',
 					{
 						text: userText,
 					},
 					{ withCredentials: true }
 				);
 				console.log(response.data);
+				setNewConvo(false);
 			} catch (error) {
 				console.error('Error:', error);
 			}
 		} else {
 			try {
 				const response = await axios.post(
-					'/pushMessage/' + activeID,
+					'http://localhost:5001/pushMessage/' + activeID,
 					{
 						text: userText,
 					},
@@ -62,7 +63,7 @@ const StudentDashboard = () => {
 			console.log(response.data);
 			setactiveID(firstMessages[idx].conversationId);
 			setConvoMessages(response.data.conversation.messages);
-			setnewConvoOrMess(false);
+			setNewConvo(false);
 			console.log(response.data.conversation.messages);
 			console.log(convoMessages);
 		} catch (error) {
@@ -73,7 +74,7 @@ const StudentDashboard = () => {
 	//makes new conversation so clears the screen and primes to send in a new convo
 	const makeNew = () => {
 		setConvoMessages([]);
-		setnewConvoOrMess(true);
+		setNewConvo(true);
 	};
 
 	const signOut = async () => {

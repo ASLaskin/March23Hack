@@ -191,7 +191,7 @@ app.get('/users/professors', async (req, res) => {
 //This creates the convo and then adds the ID to the users conversation array 
 router.post('/pushConversation', async (req, res) => {
     try {
-        const { text } = req.body;
+        const text = req.body.text;
         const userId = req.session.userId;
 
         if (!userId) {
@@ -226,23 +226,33 @@ router.post('/pushConversation', async (req, res) => {
 });
 
 
-//This pushes a message to a conversation 
 router.post('/pushMessage/:conversationId', async (req, res) => {
-    const conversationId = req.params.conversationId;
-    const { text } = req.body;
 
-    try {
-        const conversation = await Conversation.findById(conversationId);
-        if (!conversation) {
-            return res.status(404).json({ error: 'Conversation not found' });
-        }
 
-      
-        conversation.messages.push({
-            text: text,
-            user: user.email, 
-            time: Date.now()
-        });
+	try {
+	  const conversationId = req.params.conversationId;
+	  const text = req.body.text;
+	  const userId = req.session.userId; 
+	  if (!userId) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	  }
+  
+	  const user = await User.findById(userId);
+	  if (!user) {
+		return res.status(404).json({ error: 'User not found' });
+	  }
+
+	  const conversation = await Conversation.findById(conversationId);
+	  if (!conversation) {
+		return res.status(404).json({ error: 'Conversation not found' });
+	  }
+  
+	  // Push message, user, and timestamp into the conversation
+	  conversation.messages.push({
+		text: text,
+		user: user.email,
+		time: Date.now()
+	  });
 
         await conversation.save();
 
@@ -307,7 +317,7 @@ app.get('/conversationData/:conversationId', async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     res.status(200).json({ conversation });
-	console.log(conversation);
+	// console.log(conversation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
