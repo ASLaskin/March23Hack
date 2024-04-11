@@ -5,6 +5,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const uuidv4 = require('uuid').v4;
 const mongoose = require('mongoose');
+const socketIo = require('socket.io');
 
 const userSchema = new mongoose.Schema({
     email: String,
@@ -23,6 +24,8 @@ const conversationSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 const Conversation = mongoose.model('Conversation', conversationSchema);
+
+const io = socketIo();
 
 router.use(
     session({
