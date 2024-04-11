@@ -181,8 +181,9 @@ app.get('/users/professors', async (req, res) => {
 
 //This creates the convo and then adds the ID to the users conversation array 
 app.post('/pushConversation', async (req, res) => {
+	console.log("my b");
 	try {
-	  const { text } = req.body; 
+	  const text = req.body.text; 
 	  const userId = req.session.userId; 
 	  if (!userId) {
 		return res.status(401).json({ error: 'Unauthorized' });
@@ -291,7 +292,7 @@ app.get('/conversationData/:conversationId', async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     res.status(200).json({ conversation });
-	console.log(conversation);
+	// console.log(conversation);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
