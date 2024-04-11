@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5001');
 
 const StudentDashboard = () => {
 	const [textBoxValue, setTextBoxValue] = useState('');
@@ -87,35 +90,64 @@ const StudentDashboard = () => {
 		}
 	};
 
-	useEffect(() => {
-		const fetchConversations = async () => {
-			try {
-				const response = await axios.get(
-					'http://localhost:5001/getConversations',
-					{ withCredentials: true }
-				);
-				console.log(response.data.firstMessages);
-				setFirstMessages(response.data.firstMessages);
-			} catch (error) {
-				console.error(error);
-			}
-		};
+    useEffect(() => {
+        const fetchConversations = async () => {
+            try {
+                const response = await axios.get(
+                    'http://localhost:5001/getConversations',
+                    { withCredentials: true }
+                );
+                setFirstMessages(response.data.firstMessages);
+            } catch (error) {
+                console.error(error);
+            }
+        };
 
-		const fetchEmail = async () => {
-			try {
-				const response = await axios.get(
-					'http://localhost:5001/users/profile',
-					{ withCredentials: true }
-				);
-				setUserEmail(response.data.email);
-			} catch (error) {
-				console.error('Error fetching email:', error);
-			}
-		};
+        const fetchEmail = async () => {
+            try {
+                const response = await axios.get(
+                    'http://localhost:5001/users/profile',
+                    { withCredentials: true }
+                );
+                setUserEmail(response.data.email);
+            } catch (error) {
+                console.error('Error fetching email:', error);
+            }
+        };
 
-		fetchEmail();
-		fetchConversations();
-	}, []);
+        fetchEmail();
+        fetchConversations();
+
+        // Socket.IO event listeners
+        socket.on('newConversation', (data) => {
+            setFirstMessages([...firstMessages, { conversationId: data.conversationId, firstMessage: 'New conversation' }]);
+        });
+
+		socket.on('newMessage', (data) => {
+			// Update the conversation messages for the active conversation only
+			if (data.conversationId === activeID) {
+				setConvoMessages(prevMessages => [...prevMessages, data.message]);
+			} else {
+				// If the new message is for a different conversation, 
+				// update the conversation list to show that there are new messages
+				setFirstMessages(prevFirstMessages => {
+					return prevFirstMessages.map(conversation => {
+						if (conversation.conversationId === data.conversationId) {
+							// Update the last message to indicate new messages
+							return { ...conversation, firstMessage: 'New message received' };
+						}
+						return conversation;
+					});
+				});
+			}
+		});
+
+        // Cleanup event listeners when the component unmounts
+        return () => {
+            socket.off('newConversation');
+            socket.off('newMessage');
+        };
+    }, [activeID, convoMessages, firstMessages]);
 
 	const formatTime = (param) => {
 		const timestamp = new Date(param);

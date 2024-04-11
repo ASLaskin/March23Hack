@@ -1,74 +1,83 @@
 const express = require('express');
+const router = express.Router();
 const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const uuidv4 = require('uuid').v4;
+const socketIo = require('socket.io');
+const http = require('http');
 
 const MONGODB_PASS = 'QSSm7bp22JU2KUV2';
 
 if (!MONGODB_PASS) {
-	console.error(
-		'MongoDB password is not provided in the environment variable.'
-	);
-	process.exit(1);
+    console.error('MongoDB password is not provided in the environment variable.');
+    process.exit(1);
 }
 
 const app = express();
 app.use(express.json());
 const corsOptions = {
-	origin: 'http://localhost:5173',
-	credentials: true,
+    origin: 'http://localhost:5173',
+    credentials: true,
 };
 app.use(cors(corsOptions));
 
-const mongoURI = `mongodb+srv://andrewlaskin:QSSm7bp22JU2KUV2@cluster0.e0ivcci.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-mongoose
-	.connect(mongoURI, {})
-	.then(() => {
-		console.log('Connected to MongoDB');
-	})
-	.catch((err) => {
-		console.error('Error connecting to MongoDB:', err);
-	});
+const mongoURI = `mongodb+srv://andrewlaskin:${MONGODB_PASS}@cluster0.e0ivcci.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+mongoose.connect(mongoURI, {})
+    .then(() => {
+        console.log('Connected to MongoDB');
+    })
+    .catch((err) => {
+        console.error('Error connecting to MongoDB:', err);
+    });
 
 const db = mongoose.connection;
 
+const server = http.createServer(app);
+const io = socketIo(server);
+
+io.on('connection', (socket) => {
+    console.log('A client connected');
+
+    socket.on('disconnect', () => {
+        console.log('A client disconnected');
+    });
+});
 
 const userSchema = new mongoose.Schema({
-	email: String,
-	password: String,
-	role: String,
-	conversationsIDs: Array,
+    email: String,
+    password: String,
+    role: String,
+    conversationsIDs: Array,
 });
 
 const conversationSchema = new mongoose.Schema({
-	messages: [{
-		text: String,
-		user: String,
-		time: Number,
-	}]
-})
+    messages: [{
+        text: String,
+        user: String,
+        time: Number,
+    }]
+});
 
 const User = mongoose.model('User', userSchema);
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
 app.use(
-	session({
-		secret: 'secret',
-		resave: false,
-		saveUninitialized: false,
-		store: new MongoStore({ mongooseConnection: mongoose.connection }),
-		cookie: {
-			maxAge: 1000 * 60 * 60 * 24,
-			httpOnly: true,
-		},
-	})
+    session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+        store: new MongoStore({ mongooseConnection: mongoose.connection }),
+        cookie: {
+            maxAge: 1000 * 60 * 60 * 24,
+            httpOnly: true,
+        },
+    })
 );
 
 const sessions = {};
-
 app.post('/users', async (req, res) => {
 	try {
 		const user = await User.findOne({ email: req.body.email });
@@ -180,42 +189,46 @@ app.get('/users/professors', async (req, res) => {
 });
 
 //This creates the convo and then adds the ID to the users conversation array 
-app.post('/pushConversation', async (req, res) => {
-	try {
-	  const text = req.body.text; 
-	  const userId = req.session.userId; 
-	  if (!userId) {
-		return res.status(401).json({ error: 'Unauthorized' });
-	  }
-  
-	  const user = await User.findById(userId);
-	  if (!user) {
-		return res.status(404).json({ error: 'User not found' });
-	  }
-  
-	  const newConversation = new Conversation();
-	  newConversation.messages.push({
-		text: text, 
-		user: user.email,
-		time: Date.now()
-	  });
-	  
-	  await newConversation.save();
-  
-	  user.conversationsIDs.push(newConversation._id);
-	  await user.save();
-  
-	  res.status(201).json({ message: 'Conversation created successfully', conversationId: newConversation._id });
-	} catch (error) {
-	  console.error(error);
-	  res.status(500).json({ error: 'Internal Server Error' });
-	}
+router.post('/pushConversation', async (req, res) => {
+    try {
+        const text = req.body.text;
+        const userId = req.session.userId;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const newConversation = new Conversation();
+        newConversation.messages.push({
+            text: text,
+            user: user.email,
+            time: Date.now()
+        });
+
+        await newConversation.save();
+
+        user.conversationsIDs.push(newConversation._id);
+        await user.save();
+
+		//Real time databse
+        io.emit('newConversation', { conversationId: newConversation._id });
+
+        res.status(201).json({ message: 'Conversation created successfully', conversationId: newConversation._id });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 
-//This pushes a message to a conversation 
-app.post('/pushMessage/:conversationId', async (req, res) => {
-	// console.log("my b");
+router.post('/pushMessage/:conversationId', async (req, res) => {
+
+
 	try {
 	  const conversationId = req.params.conversationId;
 	  const text = req.body.text;
@@ -240,17 +253,18 @@ app.post('/pushMessage/:conversationId', async (req, res) => {
 		user: user.email,
 		time: Date.now()
 	  });
-  
-	  await conversation.save();
 
-	  console.log(conversation.messages);
-  
-	  res.status(201).json({ message: 'Message added to conversation successfully' });
-	} catch (error) {
-	  console.error(error);
-	  res.status(500).json({ error: 'Internal Server Error' });
-	}
-  });
+        await conversation.save();
+
+		//more realtime database stuff 
+        io.emit('newMessage', { conversationId: conversationId, message: text });
+
+        res.status(201).json({ message: 'Message added to conversation successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 
 // Get the first message of each conversation for the current user
@@ -310,5 +324,6 @@ app.get('/conversationData/:conversationId', async (req, res) => {
   }
 });
 
+module.exports = router;
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
