@@ -16,7 +16,7 @@ const StudentDashboard = () => {
 		//setIsOpen(true);
 		const userText = textBoxValue;
 
-		//if its true we make a new convo false we make it a message 
+		//if its true we make a new convo false we make it a message
 		if (newConvoOrMess == true) {
 			try {
 				const response = await axios.post(
@@ -115,6 +115,16 @@ const StudentDashboard = () => {
 		fetchEmail();
 		fetchConversations();
 	}, []);
+
+	const formatTime = (param) => {
+		const timestamp = new Date(param);
+		const day = timestamp.getDate();
+		const month = timestamp.getMonth() + 1; 
+		const year = timestamp.getFullYear();
+
+		const formattedDate = `${day}/${month}/${year}`;
+		return formattedDate;
+	};
 
 	return (
 		<>
@@ -222,38 +232,48 @@ const StudentDashboard = () => {
 			</aside>
 			<div className="p-4 sm:ml-64">
 				<div
-					className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14 flex flex-col-reverse"
+					className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14 flex flex-col"
 					style={{ height: 'calc(100vh - 60px)' }}
 				>
-					<div className="flex items-center justify-between">
-						<textarea
-							className="text-black left-4 w-full h-16 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-							placeholder="Type something here..."
-							value={textBoxValue}
-							onChange={(e) => setTextBoxValue(e.target.value)}
-						></textarea>
-						<button
-							type="button"
-							className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
-							onClick={submitText}
-						>
-							Submit
-						</button>
-					</div>
-					<div>
-						<h1>Conversation Messages:</h1>
-						<ul>
-							{convoMessages.map((message, index) => (
-								<li key={index}>
-									<p>User: {message.user}</p>
-									<p>Text: {message.text}</p>
-									<p>Timestamp: {message.time}</p>
-								</li>
+					<div
+						className="flex flex-col-reverse overflow-y-auto conversation-messages"
+						style={{ maxHeight: 'calc(100% - 60px - 3rem)' }}
+					>
+						{convoMessages
+							.slice(0)
+							.reverse()
+							.map((message, index) => (
+								<div key={index} className="bg-gray-100 rounded-lg p-4 mb-4">
+									<div className="flex justify-between">
+										<div>
+											<p className="font-bold">{message.user}</p>
+											<p className="mt-2">{message.text}</p>
+										</div>
+										<p className="text-sm text-gray-500">{formatTime(message.time)}</p>
+									</div>
+								</div>
 							))}
-						</ul>
+					</div>
+					<div className="mt-auto">
+						<div className="flex items-center justify-between">
+							<textarea
+								className="text-black w-full h-16 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+								placeholder="Type something here..."
+								value={textBoxValue}
+								onChange={(e) => setTextBoxValue(e.target.value)}
+							></textarea>
+							<button
+								type="button"
+								className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
+								onClick={submitText}
+							>
+								Submit
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
+
 			<Modal isOpen={isOpen} onClose={closeModal} />
 		</>
 	);
