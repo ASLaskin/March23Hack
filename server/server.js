@@ -181,7 +181,6 @@ app.get('/users/professors', async (req, res) => {
 
 //This creates the convo and then adds the ID to the users conversation array 
 app.post('/pushConversation', async (req, res) => {
-	console.log("my b");
 	try {
 	  const text = req.body.text; 
 	  const userId = req.session.userId; 
@@ -216,10 +215,20 @@ app.post('/pushConversation', async (req, res) => {
 
 //This pushes a message to a conversation 
 app.post('/pushMessage/:conversationId', async (req, res) => {
-	const conversationId = req.params.conversationId;
-	const { text }= req.body;
-  
+	// console.log("my b");
 	try {
+	  const conversationId = req.params.conversationId;
+	  const text = req.body.text;
+	  const userId = req.session.userId; 
+	  if (!userId) {
+		return res.status(401).json({ error: 'Unauthorized' });
+	  }
+  
+	  const user = await User.findById(userId);
+	  if (!user) {
+		return res.status(404).json({ error: 'User not found' });
+	  }
+
 	  const conversation = await Conversation.findById(conversationId);
 	  if (!conversation) {
 		return res.status(404).json({ error: 'Conversation not found' });
@@ -228,11 +237,13 @@ app.post('/pushMessage/:conversationId', async (req, res) => {
 	  // Push message, user, and timestamp into the conversation
 	  conversation.messages.push({
 		text: text,
-		userId: user.email,
+		user: user.email,
 		time: Date.now()
 	  });
   
 	  await conversation.save();
+
+	  console.log(conversation.messages);
   
 	  res.status(201).json({ message: 'Message added to conversation successfully' });
 	} catch (error) {
