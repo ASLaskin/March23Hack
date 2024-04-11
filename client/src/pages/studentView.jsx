@@ -27,6 +27,7 @@ const StudentDashboard = () => {
 					{ withCredentials: true }
 				);
 				console.log(response.data);
+				setNewConvo(false);
 			} catch (error) {
 				console.error('Error:', error);
 			}
@@ -59,7 +60,7 @@ const StudentDashboard = () => {
 			console.log(response.data);
 			setactiveID(firstMessages[idx].conversationId);
 			setConvoMessages(response.data.conversation.messages);
-			setnewConvo(false);
+			setNewConvo(false);
 			console.log(response.data.conversation.messages);
 			console.log(convoMessages);
 		} catch (error) {
