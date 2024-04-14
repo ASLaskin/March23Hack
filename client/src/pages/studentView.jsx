@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
 import io from 'socket.io-client';
+import { set } from 'mongoose';
 
 const socket = io('http://localhost:5001');
 
@@ -12,40 +13,38 @@ const StudentDashboard = () => {
 	const [firstMessages, setFirstMessages] = useState([]);
 	const [convoMessages, setConvoMessages] = useState([]);
 	const [newConvo, setNewConvo] = useState(true);
-	const [activeID, setactiveID] = useState();
+	const [activeID, setActiveID] = useState();
+	const [conversationPushed, setConversationPushed] = useState(false);
+	const [messagePushed, setMessagePushed] = useState(false);
 
 	const submitText = async () => {
-		//This is for model we should make it open after AI response
-		//setIsOpen(true);
 		const userText = textBoxValue;
 
-		//if its true we make a new convo false we make it a message
-		if (newConvo == true) {
+		if (newConvo) {
 			try {
 				const response = await axios.post(
 					'http://localhost:5001/pushConversation',
-					{
-						text: userText,
-					},
+					{ text: userText },
 					{ withCredentials: true }
 				);
-				console.log(response.data);
+				console.log('New conversation created:', response.data);
 				setNewConvo(false);
+				setConversationPushed(true);
 			} catch (error) {
-				console.error('Error:', error);
+				console.error('Error creating conversation:', error);
 			}
 		} else {
 			try {
 				const response = await axios.post(
-					'http://localhost:5001/pushMessage/' + activeID,
-					{
-						text: userText,
-					},
+					`http://localhost:5001/pushMessage/${activeID}`,
+					{ text: userText },
 					{ withCredentials: true }
 				);
-				console.log(response.data);
+				setMessagePushed(true);
+				//setConvoMessages((prevMessages) => [...prevMessages, response.data.message]);
+				console.log('New message pushed:', response.data);
 			} catch (error) {
-				console.error('Error', error);
+				console.error('Error pushing message:', error);
 			}
 		}
 	};
@@ -57,21 +56,17 @@ const StudentDashboard = () => {
 	const chatClick = async (idx) => {
 		try {
 			const response = await axios.get(
-				'http://localhost:5001/conversationData/' +
-					firstMessages[idx].conversationId
+				`http://localhost:5001/conversationData/${firstMessages[idx].conversationId}`
 			);
-			console.log(response.data);
-			setactiveID(firstMessages[idx].conversationId);
+			console.log('Conversation data fetched:', response.data);
+			setActiveID(firstMessages[idx].conversationId);
 			setConvoMessages(response.data.conversation.messages);
 			setNewConvo(false);
-			console.log(response.data.conversation.messages);
-			console.log(convoMessages);
 		} catch (error) {
-			console.log(error);
+			console.log('Error fetching conversation data:', error);
 		}
 	};
 
-	//makes new conversation so clears the screen and primes to send in a new convo
 	const makeNew = () => {
 		setConvoMessages([]);
 		setNewConvo(true);
@@ -84,75 +79,83 @@ const StudentDashboard = () => {
 				{},
 				{ withCredentials: true }
 			);
-			console.log(response);
+			console.log('User signed out:', response);
 		} catch (error) {
-			console.error(error);
+			console.error('Error signing out:', error);
 		}
 	};
 
-    useEffect(() => {
-        const fetchConversations = async () => {
-            try {
-                const response = await axios.get(
-                    'http://localhost:5001/getConversations',
-                    { withCredentials: true }
-                );
-                setFirstMessages(response.data.firstMessages);
-            } catch (error) {
-                console.error(error);
-            }
-        };
-
-        const fetchEmail = async () => {
-            try {
-                const response = await axios.get(
-                    'http://localhost:5001/users/profile',
-                    { withCredentials: true }
-                );
-                setUserEmail(response.data.email);
-            } catch (error) {
-                console.error('Error fetching email:', error);
-            }
-        };
-
-        fetchEmail();
-        fetchConversations();
-
-        // Socket.IO event listeners
-        socket.on('newConversation', (data) => {
-            setFirstMessages([...firstMessages, { conversationId: data.conversationId, firstMessage: 'New conversation' }]);
-        });
-
-		socket.on('newMessage', (data) => {
-			// Update the conversation messages for the active conversation only
-			if (data.conversationId === activeID) {
-				setConvoMessages(prevMessages => [...prevMessages, data.message]);
-			} else {
-				// If the new message is for a different conversation, 
-				// update the conversation list to show that there are new messages
-				setFirstMessages(prevFirstMessages => {
-					return prevFirstMessages.map(conversation => {
-						if (conversation.conversationId === data.conversationId) {
-							// Update the last message to indicate new messages
-							return { ...conversation, firstMessage: 'New message received' };
-						}
-						return conversation;
-					});
-				});
+	useEffect(() => {
+		const fetchEmail = async () => {
+			try {
+				const response = await axios.get(
+					'http://localhost:5001/users/profile',
+					{ withCredentials: true }
+				);
+				console.log('User email fetched:', response.data.email);
+				setUserEmail(response.data.email);
+			} catch (error) {
+				console.error('Error fetching email:', error);
 			}
-		});
+		};
 
-        // Cleanup event listeners when the component unmounts
-        return () => {
-            socket.off('newConversation');
-            socket.off('newMessage');
-        };
-    }, [activeID, convoMessages, firstMessages]);
+		fetchEmail();
+	}, []);
+
+	useEffect(() => {
+		const fetchConversations = async () => {
+			try {
+				const response = await axios.get(
+					'http://localhost:5001/getConversations',
+					{ withCredentials: true }
+				);
+				console.log('Conversations fetched:', response.data);
+				setFirstMessages(response.data.firstMessages);
+				setConversationPushed(false);
+			} catch (error) {
+				console.error('Error fetching conversations:', error);
+			}
+		};
+
+		fetchConversations();
+	}, [conversationPushed]);
+
+	useEffect(() => {
+		const handleNewConversation = (data) => {
+			console.log('New conversation received:', data);
+			setFirstMessages([
+				...firstMessages,
+				{
+					conversationId: data.conversationId,
+					firstMessage: 'New conversation',
+				},
+			]);
+		};
+
+		socket.on('newConversation', handleNewConversation);
+
+		return () => {
+			socket.off('newConversation', handleNewConversation);
+		};
+	}, [firstMessages]);
+
+	useEffect(() => {
+		const handleNewMessage = (data) => {
+			console.log('New message received:', data);
+			setConvoMessages((prevMessages) => [...prevMessages, data.message]);
+		};
+
+		socket.on('newMessage', handleNewMessage);
+
+		return () => {
+			socket.off('newMessage', handleNewMessage);
+		};
+	}, [messagePushed]);
 
 	const formatTime = (param) => {
 		const timestamp = new Date(param);
 		const day = timestamp.getDate();
-		const month = timestamp.getMonth() + 1; 
+		const month = timestamp.getMonth() + 1;
 		const year = timestamp.getFullYear();
 
 		const formattedDate = `${day}/${month}/${year}`;
@@ -273,7 +276,7 @@ const StudentDashboard = () => {
 						style={{ maxHeight: 'calc(100% - 60px - 3rem)' }}
 					>
 						{convoMessages
-							.slice(0)
+							.slice()
 							.reverse()
 							.map((message, index) => (
 								<div key={index} className="bg-gray-100 rounded-lg p-4 mb-4">
@@ -282,7 +285,9 @@ const StudentDashboard = () => {
 											<p className="font-bold">{message.user}</p>
 											<p className="mt-2">{message.text}</p>
 										</div>
-										<p className="text-sm text-gray-500">{formatTime(message.time)}</p>
+										<p className="text-sm text-gray-500">
+											{formatTime(message.time)}
+										</p>
 									</div>
 								</div>
 							))}
