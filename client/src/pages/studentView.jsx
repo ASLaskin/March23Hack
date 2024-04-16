@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
 import io from 'socket.io-client';
-import { set } from 'mongoose';
 
 const socket = io('http://localhost:5001');
 
@@ -15,7 +14,7 @@ const StudentDashboard = () => {
 	const [newConvo, setNewConvo] = useState(true);
 	const [activeID, setActiveID] = useState();
 	const [conversationPushed, setConversationPushed] = useState(false);
-	const [messagePushed, setMessagePushed] = useState(false);
+	const [messagePushed, setMessagePushed] = useState();
 
 	const submitText = async () => {
 		const userText = textBoxValue;
@@ -139,17 +138,27 @@ const StudentDashboard = () => {
 		};
 	}, [firstMessages]);
 
+	//TODO:This needs to be changed to use socket.io to fetch messages
 	useEffect(() => {
-		const handleNewMessage = (data) => {
-			console.log('New message received:', data);
-			setConvoMessages((prevMessages) => [...prevMessages, data.message]);
-		};
-
-		socket.on('newMessage', handleNewMessage);
-
-		return () => {
-			socket.off('newMessage', handleNewMessage);
-		};
+		console.log('this triggered');
+		if (activeID) {
+			const fetchMessages = async () => {
+				try {
+					const response = await axios.get(
+						`http://localhost:5001/conversationData/${activeID}`
+					);
+					console.log('Messages fetched:', response.data);
+					setConvoMessages((prevMessages) => [
+						...prevMessages,
+						...response.data.conversation.messages,
+					]);
+					setMessagePushed(false);
+				} catch (error) {
+					console.error('Error fetching messages:', error);
+				}
+			};
+			fetchMessages();
+		}
 	}, [messagePushed]);
 
 	const formatTime = (param) => {

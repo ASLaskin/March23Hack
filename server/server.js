@@ -5,10 +5,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const http = require('http');
 const socketIo = require('socket.io');
-const routes = require('./routes.js');
-
 const app = express();
-app.use(express.json());
 const server = http.createServer(app); // Create an HTTP server with Express app
 const io = socketIo(server, {
   cors: {
@@ -29,6 +26,8 @@ mongoose.connect(mongoURI, {})
 
 const db = mongoose.connection;
 
+// Importing routes
+const routes = require('./routes.js');
 
 // Apply CORS middleware with dynamic origin
 app.use(cors({
@@ -42,7 +41,24 @@ app.use(cors({
   credentials: true
 }));
 
-// Importing routes
+// Apply session middleware
+app.use(
+    session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+        store: new MongoStore({ mongooseConnection: mongoose.connection }),
+        cookie: {
+            maxAge: 1000 * 60 * 60 * 24,
+            httpOnly: true,
+        },
+    })
+);
+
+// Parsing JSON requests
+app.use(express.json());
+
+// Use the routes
 app.use('/', routes);
 
 const PORT = process.env.PORT || 5001;
