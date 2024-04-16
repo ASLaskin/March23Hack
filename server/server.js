@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -14,7 +15,7 @@ const io = socketIo(server, {
   }
 });
 
-const MONGODB_PASS = 'QSSm7bp22JU2KUV2';
+const MONGODB_PASS = process.env.MongoDBPass;
 const mongoURI = `mongodb+srv://andrewlaskin:${MONGODB_PASS}@cluster0.e0ivcci.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 mongoose.connect(mongoURI, {})
     .then(() => {
