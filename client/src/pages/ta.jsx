@@ -2,37 +2,27 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
 import io from 'socket.io-client';
-import { fetchUserEmail,signOut,fetchConversationData,fetchConversations } from '../components/api.js';
+import {
+	fetchUserEmail,
+	signOut,
+	fetchConversationData,
+	fetchConversations,
+} from '../components/api.js';
 
 const socket = io('http://localhost:5001');
 
-const StudentDashboard = () => {
+const taDashboard = () => {
 	const [textBoxValue, setTextBoxValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
 	const [firstMessages, setFirstMessages] = useState([]);
 	const [convoMessages, setConvoMessages] = useState([]);
-	const [newConvo, setNewConvo] = useState(true);
-	const [activeID, setActiveID] = useState();
-	const [conversationPushed, setConversationPushed] = useState(false);
+	const [activeID, setActiveID] = useState(null);
 	const [messagePushed, setMessagePushed] = useState();
 
 	const submitText = async () => {
 		const userText = textBoxValue;
-		if (newConvo) {
-			try {
-				const response = await axios.post(
-					'http://localhost:5001/pushConversation',
-					{ text: userText },
-					{ withCredentials: true }
-				);
-				console.log('New conversation created:', response.data);
-				setNewConvo(false);
-				setConversationPushed(true);
-			} catch (error) {
-				console.error('Error creating conversation:', error);
-			}
-		} else {
+		if (activeID) {
 			try {
 				const response = await axios.post(
 					`http://localhost:5001/pushMessage/${activeID}`,
@@ -52,59 +42,39 @@ const StudentDashboard = () => {
 	};
 
 	const chatClick = async (idx) => {
-        try {
-            const conversationId = firstMessages[idx].conversationId; 
-            const data = await fetchConversationData(conversationId);
-            console.log('Conversation data fetched:', data);
-            setActiveID(conversationId);
-            setConvoMessages(data.conversation.messages);
-            setNewConvo(false);
-        } catch (error) {
-            console.error('Error fetching conversation data:', error);
-        }
-    };
-
-	const makeNew = () => {
-		setConvoMessages([]);
-		setNewConvo(true);
+		try {
+			const conversationId = firstMessages[idx].conversationId;
+			const data = await fetchConversationData(conversationId);
+			console.log('Conversation data fetched:', data);
+			setActiveID(conversationId);
+			setConvoMessages(data.conversation.messages);
+			setNewConvo(false);
+		} catch (error) {
+			console.error('Error fetching conversation data:', error);
+		}
 	};
 
-    const handleSignOut = async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error('Error signing out:', error);
-        }
-    };
+	const handleSignOut = async () => {
+		try {
+			await signOut();
+		} catch (error) {
+			console.error('Error signing out:', error);
+		}
+	};
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const email = await fetchUserEmail();
-                console.log('User email fetched:', email);
-                setUserEmail(email);
-            } catch (error) {
-                console.error('Error fetching email:', error);
-            }
-        };
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const email = await fetchUserEmail();
+				console.log('User email fetched:', email);
+				setUserEmail(email);
+			} catch (error) {
+				console.error('Error fetching email:', error);
+			}
+		};
 
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const firstMessagesData = await fetchConversations();
-                console.log('Conversations fetched:', firstMessagesData);
-                setFirstMessages(firstMessagesData);
-                setConversationPushed(false);
-            } catch (error) {
-                console.error('Error fetching conversations:', error);
-            }
-        };
-
-        fetchData();
-    }, [conversationPushed]);
+		fetchData();
+	}, []);
 
 	useEffect(() => {
 		const handleNewConversation = (data) => {
@@ -125,7 +95,6 @@ const StudentDashboard = () => {
 		};
 	}, [firstMessages]);
 
-	//TODO:This needs to be changed to use socket.io to fetch messages
 	useEffect(() => {
 		console.log('this triggered');
 		if (activeID) {
@@ -249,16 +218,19 @@ const StudentDashboard = () => {
 			>
 				<div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
 					<ul className="space-y-2 font-medium">
-						<button onClick={makeNew}>New Conversation</button>
-						{firstMessages.map((conversation, idx) => (
-							<a
-								key={idx}
-								onClick={() => chatClick(idx)}
-								className="hover:underline cursor-pointer"
-							>
-								<li>{conversation.firstMessage}</li>
-							</a>
-						))}
+						{firstMessages.length === 0 ? (
+							<li>No conversations at this time</li>
+						) : (
+							firstMessages.map((conversation, idx) => (
+								<a
+									key={idx}
+									onClick={() => chatClick(idx)}
+									className="hover:underline cursor-pointer"
+								>
+									<li>{conversation.firstMessage}</li>
+								</a>
+							))
+						)}
 					</ul>
 				</div>
 			</aside>
@@ -313,4 +285,4 @@ const StudentDashboard = () => {
 	);
 };
 
-export default StudentDashboard;
+export default taDashboard;

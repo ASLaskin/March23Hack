@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../components/modal';
 import axios from 'axios';
+import io from 'socket.io-client';
+import { fetchConversations, signOut, fetchUserEmail } from '../components/api';
+
+const socket = io('http://localhost:5001');
 
 const TeacherDashboard = () => {
 	const [textBoxValue, setTextBoxValue] = useState('');
@@ -9,17 +13,30 @@ const TeacherDashboard = () => {
 	const [userEmail, setUserEmail] = useState('');
 
 	useEffect(() => {
-		fetchConversations();
+		const fetchData = async () => {
+			try {
+				const email = await fetchUserEmail();
+				setUserEmail(email);
+			} catch (error) {
+				console.error('Error fetching email:', error);
+			}
+		};
+
+		fetchData();
 	}, []);
 
-	const fetchConversations = async () => {
-		try {
-			const response = await axios.get('http://localhost:5001/conversations');
-			setConversations(response.data);
-		} catch (error) {
-			console.error('Error fetching conversations:', error);
-		}
-	};
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const conversationData = await fetchConversations();
+				setConversations(conversationData);
+			} catch (error) {
+				console.error('Error fetching conversations:', error);
+			}
+		};
+
+		fetchData();
+	}, []);
 
 	const submitText = () => {
 		setIsOpen(true);
@@ -29,36 +46,24 @@ const TeacherDashboard = () => {
 		setIsOpen(false);
 	};
 
-	const signOut = async () => {
-		const response = await axios.post('http://localhost:5001/users/logout', {
-			name: email,
-			password: password,
-		});
-		setUserEmail('');
+	const handleSignOut = async () => {
+		try {
+			await signOut();
+			setUserEmail('');
+		} catch (error) {
+			console.error('Error signing out:', error);
+		}
 	};
 
-	useEffect(() => {
-		const fetchEmail = async () => {
-			try {
-				const response = await fetch('http://localhost:5001/users/profile', {
-					method: 'GET',
-					credentials: 'include',
-				});
-				if (!response.ok) {
-					throw new Error('Failed to fetch email');
-				}
-				const data = await response.json();
-				setUserEmail(data.email);
-			} catch (error) {
-				console.error('Error fetching email:', error);
-			}
-		};
+	const formatTime = (param) => {
+		const timestamp = new Date(param);
+		const day = timestamp.getDate();
+		const month = timestamp.getMonth() + 1;
+		const year = timestamp.getFullYear();
 
-		fetchEmail();
-		return () => {
-			console.log('clean up');
-		};
-	}, []);
+		const formattedDate = `${day}/${month}/${year}`;
+		return formattedDate;
+	};
 
 	return (
 		<>
@@ -107,7 +112,7 @@ const TeacherDashboard = () => {
 						<div className="flex items-center">
 							<div className=" items-center ms-3">
 								<a
-									onClick={signOut}
+									onClick={handleSignOut}
 									className=" flex cursor-pointer space-x-1"
 									href="/login"
 								>
@@ -135,13 +140,7 @@ const TeacherDashboard = () => {
 											className="text-sm text-gray-900 dark:text-white"
 											role="none"
 										>
-											Neil Sims
-										</p>
-										<p
-											className="text-sm font-medium text-gray-900 truncate dark:text-gray-300"
-											role="none"
-										>
-											neil.sims@flowbite.com
+											{userEmail}
 										</p>
 									</div>
 									<ul className="py-1" role="none"></ul>
@@ -160,6 +159,7 @@ const TeacherDashboard = () => {
 			>
 				<div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
 					<ul className="space-y-2 font-medium">
+						{/* TODO: Should we really implement this :( */}
 						<label
 							class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
 							for="file_input"
@@ -172,6 +172,7 @@ const TeacherDashboard = () => {
 							type="file"
 						/>
 						<div>
+							{/* TODO: Simple implementation, if email exists add them if not say no, also update the TA LIST */}
 							<label
 								for="small-input"
 								class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -185,7 +186,7 @@ const TeacherDashboard = () => {
 							/>
 						</div>
 						<ul class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
-							{' '}
+							{/* TODO:IMPLEMENT THIS TO MAP TAS  */}
 							<a className="text-black ">Current TA's</a>
 							<li>Andrew Laskin</li>
 							<li>Andrew Laskin</li>
@@ -205,17 +206,16 @@ const TeacherDashboard = () => {
 					</ul>
 				</div>
 			</aside>
-
-			{/* Main content */}
 			<div className="p-4 sm:ml-64">
 				<div
 					className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14 flex flex-col-reverse"
 					style={{ height: 'calc(100vh - 60px)' }}
 				>
 					<div className="flex items-center justify-between">
+						{/* TODO:Conditionally render this only when activechat */}
 						<textarea
 							className="text-black left-4 w-full h-16 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-							placeholder="Type something here..."
+							placeholder="This should be rendered only when a conversation is selected"
 							value={textBoxValue}
 							onChange={(e) => setTextBoxValue(e.target.value)}
 						></textarea>

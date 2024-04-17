@@ -11,6 +11,7 @@ function App() {
         <Route path="/signup" element={<Pages.SignUpPage />} />
         <Route path="/student" element={<Pages.StudentDashboard />} />
         <Route path="/teacher" element={<Pages.TeacherDashboard />} />
+        <Route path="/ta" element={<Pages.TaDashboard />} />
       </Routes>
     </Router>
   )
