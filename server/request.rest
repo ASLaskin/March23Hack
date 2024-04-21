@@ -1,0 +1,38 @@
+//I recommend using rest client extension within vscode
+
+//Register
+POST http://localhost:5001/users
+Content-Type: application/json
+
+{
+    "email": "admin",
+    "password": "admin",
+    "role": "admin"
+
+}
+
+
+###
+
+//Login
+POST http://localhost:5001/users/login
+Content-Type: application/json
+
+{
+    "email": "admin",
+    "password": "admin"
+}
+
+###
+
+//Username
+GET http://localhost:5001/profile
+Content-Type: application/json
+
+###
+//logout
+POST http://localhost:5001/users/logout
+
+###
+
+
