@@ -213,7 +213,7 @@ router.post('/pushMessage/:conversationId', async (req, res) => {
 
         // Real time database
 
-        io.emit('newMessage', { conversationId: conversationId, message: words });
+        io.emit('fetchMessages', { conversationId: conversationId, message: words });
 
         res.status(201).json({ message: 'Message added to conversation successfully' });
     } catch (error) {

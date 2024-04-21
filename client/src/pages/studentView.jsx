@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
 import io from 'socket.io-client';
-import { fetchUserEmail,signOut,fetchConversationData,fetchConversations } from '../components/api.js';
+import {
+	fetchUserEmail,
+	signOut,
+	fetchConversationData,
+	fetchConversations,
+} from '../components/api.js';
 
 const socket = io('http://localhost:5001');
 
@@ -52,59 +57,59 @@ const StudentDashboard = () => {
 	};
 
 	const chatClick = async (idx) => {
-        try {
-            const conversationId = firstMessages[idx].conversationId; 
-            const data = await fetchConversationData(conversationId);
-            console.log('Conversation data fetched:', data);
-            setActiveID(conversationId);
-            setConvoMessages(data.conversation.messages);
-            setNewConvo(false);
-        } catch (error) {
-            console.error('Error fetching conversation data:', error);
-        }
-    };
+		try {
+			const conversationId = firstMessages[idx].conversationId;
+			const data = await fetchConversationData(conversationId);
+			console.log('Conversation data fetched:', data);
+			setActiveID(conversationId);
+			setConvoMessages(data.conversation.messages);
+			setNewConvo(false);
+		} catch (error) {
+			console.error('Error fetching conversation data:', error);
+		}
+	};
 
 	const makeNew = () => {
 		setConvoMessages([]);
 		setNewConvo(true);
 	};
 
-    const handleSignOut = async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error('Error signing out:', error);
-        }
-    };
+	const handleSignOut = async () => {
+		try {
+			await signOut();
+		} catch (error) {
+			console.error('Error signing out:', error);
+		}
+	};
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const email = await fetchUserEmail();
-                console.log('User email fetched:', email);
-                setUserEmail(email);
-            } catch (error) {
-                console.error('Error fetching email:', error);
-            }
-        };
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const email = await fetchUserEmail();
+				console.log('User email fetched:', email);
+				setUserEmail(email);
+			} catch (error) {
+				console.error('Error fetching email:', error);
+			}
+		};
 
-        fetchData();
-    }, []);
+		fetchData();
+	}, []);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const firstMessagesData = await fetchConversations();
-                console.log('Conversations fetched:', firstMessagesData);
-                setFirstMessages(firstMessagesData);
-                setConversationPushed(false);
-            } catch (error) {
-                console.error('Error fetching conversations:', error);
-            }
-        };
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const firstMessagesData = await fetchConversations();
+				console.log('Conversations fetched:', firstMessagesData);
+				setFirstMessages(firstMessagesData);
+				setConversationPushed(false);
+			} catch (error) {
+				console.error('Error fetching conversations:', error);
+			}
+		};
 
-        fetchData();
-    }, [conversationPushed]);
+		fetchData();
+	}, [conversationPushed]);
 
 	useEffect(() => {
 		const handleNewConversation = (data) => {
@@ -125,28 +130,20 @@ const StudentDashboard = () => {
 		};
 	}, [firstMessages]);
 
-	//TODO:This needs to be changed to use socket.io to fetch messages
+	//Refreshes new messages displayed
 	useEffect(() => {
-		console.log('this triggered');
-		if (activeID) {
-			const fetchMessages = async () => {
-				try {
-					const response = await axios.get(
-						`http://localhost:5001/conversationData/${activeID}`
-					);
-					console.log('Messages fetched:', response.data);
-					setConvoMessages((prevMessages) => [
-						...prevMessages,
-						...response.data.conversation.messages,
-					]);
-					setMessagePushed(false);
-				} catch (error) {
-					console.error('Error fetching messages:', error);
-				}
-			};
-			fetchMessages();
-		}
-	}, [messagePushed]);
+		console.log('Message pushed:', messagePushed);
+		const handleNewMessage = (data) => {
+			console.log('New message received:', data);
+			setConvoMessages([...convoMessages, data.message]);
+		};
+
+		socket.on('newMessage', handleNewMessage);
+
+		return () => {
+			socket.off('newMessage', handleNewMessage);
+		};
+	}, [messagePushed, socket]);
 
 	const formatTime = (param) => {
 		const timestamp = new Date(param);
