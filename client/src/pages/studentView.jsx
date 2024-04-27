@@ -22,6 +22,9 @@ const StudentDashboard = () => {
 	const [conversationPushed, setConversationPushed] = useState(false);
 	const [messagePushed, setMessagePushed] = useState();
 
+	//This is used to send it to the AI to get a response
+	const [firstMessage, setFirstMessage] = useState('');
+
 	const submitText = async () => {
 		const userText = textBoxValue;
 		if (newConvo) {
@@ -34,6 +37,7 @@ const StudentDashboard = () => {
 				console.log('New conversation created:', response.data);
 				setNewConvo(false);
 				setConversationPushed(true);
+				setFirstMessage(userText);
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -85,17 +89,26 @@ const StudentDashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const email = await fetchUserEmail();
-				console.log('User email fetched:', email);
-				setUserEmail(email);
+				const firstMessagesData = await fetchConversations();
+				console.log('Conversations fetched:', firstMessagesData);
+				setFirstMessages(firstMessagesData);
+				setConversationPushed(false);
+
+				//This opens the newest conversation 
+				if (firstMessagesData.length > 0) {
+					const latestConversationIndex = firstMessagesData.length - 1;
+					chatClick(latestConversationIndex);
+					//TODO: Run a function to get the response from the AI and display it
+				}
 			} catch (error) {
-				console.error('Error fetching email:', error);
+				console.error('Error fetching conversations:', error);
 			}
 		};
 
 		fetchData();
-	}, []);
+	}, [conversationPushed]);
 
+	//This is what fetches sidebar
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -122,7 +135,6 @@ const StudentDashboard = () => {
 				},
 			]);
 		};
-
 		socket.on('newConversation', handleNewConversation);
 
 		return () => {
