@@ -9,6 +9,7 @@ import {
 	fetchConversations,
 } from '../components/api.js';
 
+
 const socket = io('http://localhost:5001');
 
 const StudentDashboard = () => {
@@ -25,6 +26,20 @@ const StudentDashboard = () => {
 	//This is used to send it to the AI to get a response
 	const [firstMessage, setFirstMessage] = useState('');
 
+
+	useEffect(() => {
+		const fetchUserEmail = async () => {
+			try {
+				const email = await fetchUserEmail();
+				setUserEmail(email);
+			}
+			catch (error) {
+				console.error('Error fetching user email:', error);
+			}
+		};
+
+		fetchUserEmail();
+		}, []);
 
 	const submitText = async () => {
 		const userText = textBoxValue;
@@ -91,6 +106,7 @@ const StudentDashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
+
 				const firstMessagesData = await fetchConversations();
 				console.log('Conversations fetched:', firstMessagesData);
 				setFirstMessages(firstMessagesData);
