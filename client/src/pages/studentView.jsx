@@ -25,6 +25,7 @@ const StudentDashboard = () => {
 	//This is used to send it to the AI to get a response
 	const [firstMessage, setFirstMessage] = useState('');
 
+
 	const submitText = async () => {
 		const userText = textBoxValue;
 		if (newConvo) {
@@ -38,6 +39,7 @@ const StudentDashboard = () => {
 				setNewConvo(false);
 				setConversationPushed(true);
 				setFirstMessage(userText);
+				setActiveID(response.data.conversationId);
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -95,10 +97,12 @@ const StudentDashboard = () => {
 				setConversationPushed(false);
 
 				//This opens the newest conversation 
-				if (firstMessagesData.length > 0) {
+				if (firstMessagesData.length > 0 ) {
 					const latestConversationIndex = firstMessagesData.length - 1;
 					chatClick(latestConversationIndex);
-					//TODO: Run a function to get the response from the AI and display it
+					if (convoMessages.length = 1) {
+						fetchAIResponse();
+					}
 				}
 			} catch (error) {
 				console.error('Error fetching conversations:', error);
@@ -107,6 +111,26 @@ const StudentDashboard = () => {
 
 		fetchData();
 	}, [conversationPushed]);
+
+	const fetchAIResponse = async () => {
+		try {
+			const AIResponse = {
+				user: 'AI',
+				text: 'This isnt real',
+				time: Date.now(),
+			};
+			const response = await axios.post(
+				`http://localhost:5001/pushMessage/${activeID}`,
+				{ text: AIResponse.text },
+				{ withCredentials: true }
+			);
+			setMessagePushed(true);
+			console.log('AI response pushed:', response.data);
+		} catch (error) {
+			console.error('Error fetching AI response:', error);
+		}
+	};
+
 
 	//This is what fetches sidebar
 	useEffect(() => {
@@ -134,13 +158,14 @@ const StudentDashboard = () => {
 					firstMessage: 'New conversation',
 				},
 			]);
+			setActiveID(data.conversationId); 
 		};
 		socket.on('newConversation', handleNewConversation);
 
 		return () => {
 			socket.off('newConversation', handleNewConversation);
 		};
-	}, [firstMessages]);
+	}, [firstMessages,socket]);
 
 	//Refreshes new messages displayed
 	useEffect(() => {
