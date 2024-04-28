@@ -9,7 +9,6 @@ import {
 	fetchConversations,
 } from '../components/api.js';
 
-
 const socket = io('http://localhost:5001');
 
 const StudentDashboard = () => {
@@ -26,20 +25,18 @@ const StudentDashboard = () => {
 	//This is used to send it to the AI to get a response
 	const [firstMessage, setFirstMessage] = useState('');
 
-
 	useEffect(() => {
-		const fetchUserEmail = async () => {
+		const fetchEmail = async () => {
 			try {
 				const email = await fetchUserEmail();
 				setUserEmail(email);
-			}
-			catch (error) {
+			} catch (error) {
 				console.error('Error fetching user email:', error);
 			}
 		};
 
-		fetchUserEmail();
-		}, []);
+		fetchEmail();
+	}, []);
 
 	const submitText = async () => {
 		const userText = textBoxValue;
@@ -55,6 +52,13 @@ const StudentDashboard = () => {
 				setConversationPushed(true);
 				setFirstMessage(userText);
 				setActiveID(response.data.conversationId);
+
+				const data = await fetchConversationData(response.data.conversationId);
+				setConvoMessages(data.conversation.messages);
+				if (data.conversation.messages.length == 1) {
+					console.log("This got called");
+					fetchAIResponse();
+				}
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -106,20 +110,10 @@ const StudentDashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-
 				const firstMessagesData = await fetchConversations();
 				console.log('Conversations fetched:', firstMessagesData);
 				setFirstMessages(firstMessagesData);
 				setConversationPushed(false);
-
-				//This opens the newest conversation 
-				if (firstMessagesData.length > 0 ) {
-					const latestConversationIndex = firstMessagesData.length - 1;
-					chatClick(latestConversationIndex);
-					if (convoMessages.length = 1) {
-						fetchAIResponse();
-					}
-				}
 			} catch (error) {
 				console.error('Error fetching conversations:', error);
 			}
@@ -135,18 +129,22 @@ const StudentDashboard = () => {
 				text: 'This isnt real',
 				time: Date.now(),
 			};
-			const response = await axios.post(
-				`http://localhost:5001/pushMessage/${activeID}`,
-				{ text: AIResponse.text },
-				{ withCredentials: true }
-			);
-			setMessagePushed(true);
-			console.log('AI response pushed:', response.data);
+			if (activeID) {
+				const response = await axios.post(
+					`http://localhost:5001/pushMessage/${activeID}`,
+					{ text: AIResponse.text },
+					{ withCredentials: true }
+				);
+				setMessagePushed(true);
+				console.log('AI response pushed:', response.data);
+				
+				const data = await fetchConversationData(activeID);
+				setConvoMessages(data.conversation.messages);
+			}
 		} catch (error) {
 			console.error('Error fetching AI response:', error);
 		}
 	};
-
 
 	//This is what fetches sidebar
 	useEffect(() => {
@@ -174,14 +172,14 @@ const StudentDashboard = () => {
 					firstMessage: 'New conversation',
 				},
 			]);
-			setActiveID(data.conversationId); 
+			setActiveID(data.conversationId);
 		};
 		socket.on('newConversation', handleNewConversation);
 
 		return () => {
 			socket.off('newConversation', handleNewConversation);
 		};
-	}, [firstMessages,socket]);
+	}, [firstMessages, socket]);
 
 	//Refreshes new messages displayed
 	useEffect(() => {
