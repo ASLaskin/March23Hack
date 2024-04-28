@@ -51,14 +51,12 @@ const StudentDashboard = () => {
 				setNewConvo(false);
 				setConversationPushed(true);
 				setFirstMessage(userText);
-				setActiveID(response.data.conversationId);
+				const conversationId = response.data.conversationId;
+				setActiveID(conversationId);
 
-				const data = await fetchConversationData(response.data.conversationId);
+				//This is what sets it to the new conversation
+				const data = await fetchConversationData(conversationId);
 				setConvoMessages(data.conversation.messages);
-				if (data.conversation.messages.length == 1) {
-					console.log("This got called");
-					fetchAIResponse();
-				}
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -118,33 +116,76 @@ const StudentDashboard = () => {
 				console.error('Error fetching conversations:', error);
 			}
 		};
-
 		fetchData();
 	}, [conversationPushed]);
 
-	const fetchAIResponse = async () => {
-		try {
-			const AIResponse = {
-				user: 'AI',
-				text: 'This isnt real',
-				time: Date.now(),
-			};
-			if (activeID) {
-				const response = await axios.post(
-					`http://localhost:5001/pushMessage/${activeID}`,
-					{ text: AIResponse.text },
-					{ withCredentials: true }
-				);
-				setMessagePushed(true);
-				console.log('AI response pushed:', response.data);
-				
-				const data = await fetchConversationData(activeID);
-				setConvoMessages(data.conversation.messages);
+	useEffect(() => {
+		const fetchAIResponse = async () => {
+			try {
+				const AIResponse = {
+					user: 'AI',
+					text: 'This isnt real',
+					time: Date.now(),
+				};
+					const checkAIResponse = async () => {
+						if (!newConvo){
+							return false;
+						}
+						try {
+						const data = await fetchConversationData(activeID);
+						if (data.conversation.messages.length == 1) {
+							return true;
+						}
+						else return false;
+						} catch (error) {
+							console.error('Error fetching conversation data:', error);
+						}
+
+					}
+				if (activeID && checkAIResponse()) {
+					const response = await axios.post(
+						`http://localhost:5001/pushMessage/${activeID}`,
+						{ text: AIResponse.text },
+						{ withCredentials: true }
+					);
+					setMessagePushed(true);
+					console.log('AI response pushed:', response.data);
+				}
+			} catch (error) {
+				console.error('Error fetching AI response:', error);
 			}
-		} catch (error) {
-			console.error('Error fetching AI response:', error);
+		};
+
+		if (!newConvo && activeID) {
+			fetchAIResponse();
 		}
-	};
+	}, [newConvo]);
+	//This is what refreshes after AI response
+	// useEffect(() => {
+	// 	const fetching = async () => {
+	// 		fetchAIResponse();
+	// 		const data = await fetchConversationData(activeID);
+	// 		setConvoMessages(data.conversation.messages);
+	// 	};
+	// 	const checkAIResponse = async () => {
+	// 		if (!newConvo){
+	// 			return false;
+	// 		}
+	// 		try {
+	// 		const data = await fetchConversationData(activeID);
+	// 		} catch (error) {
+	// 			console.error('Error fetching conversation data:', error);
+	// 		}
+	// 		if (data.conversation.messages.length === 1) {
+	// 			return true;
+	// 		}
+	// 		else return false;
+	// 	}
+
+	// 	if (!newConvo && checkAIResponse()) {
+	// 		fetching();
+	// 	}
+	// }, [newConvo]);
 
 	//This is what fetches sidebar
 	useEffect(() => {
