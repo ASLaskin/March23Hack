@@ -69,6 +69,7 @@ const StudentDashboard = () => {
 				const data = await fetchConversationData(conversationId);
 				setConvoMessages(data.conversation.messages);
 				checkAIResponse(data);
+				setTextBoxValue('');
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -81,6 +82,7 @@ const StudentDashboard = () => {
 				);
 				setMessagePushed(true);
 				console.log('New message pushed:', response.data);
+				setTextBoxValue('');
 			} catch (error) {
 				console.error('Error pushing message:', error);
 			}
