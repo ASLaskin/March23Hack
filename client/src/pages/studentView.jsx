@@ -22,6 +22,9 @@ const StudentDashboard = () => {
 	const [conversationPushed, setConversationPushed] = useState(false);
 	const [messagePushed, setMessagePushed] = useState();
 
+	const [showAIModal, setShowAIModal] = useState(false);
+	//this is used to check to show AI Modal
+
 	//This is used to send it to the AI to get a response
 	const [firstMessage, setFirstMessage] = useState('');
 
@@ -37,6 +40,14 @@ const StudentDashboard = () => {
 
 		fetchEmail();
 	}, []);
+
+	const checkAIResponse = async (data) => {
+		if (data.conversation.messages.length == 2) {
+			setShowAIModal(true);
+		} else {
+			setShowAIModal(false);
+		}
+	};
 
 	const submitText = async () => {
 		const userText = textBoxValue;
@@ -57,6 +68,7 @@ const StudentDashboard = () => {
 				//This is what sets it to the new conversation
 				const data = await fetchConversationData(conversationId);
 				setConvoMessages(data.conversation.messages);
+				checkAIResponse(data);
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -87,6 +99,7 @@ const StudentDashboard = () => {
 			setActiveID(conversationId);
 			setConvoMessages(data.conversation.messages);
 			setNewConvo(false);
+			checkAIResponse(data);
 		} catch (error) {
 			console.error('Error fetching conversation data:', error);
 		}
@@ -127,21 +140,19 @@ const StudentDashboard = () => {
 					text: 'This isnt real',
 					time: Date.now(),
 				};
-					const checkAIResponse = async () => {
-						if (!newConvo){
-							return false;
-						}
-						try {
+				const checkAIResponse = async () => {
+					if (!newConvo) {
+						return false;
+					}
+					try {
 						const data = await fetchConversationData(activeID);
 						if (data.conversation.messages.length == 1) {
 							return true;
-						}
-						else return false;
-						} catch (error) {
-							console.error('Error fetching conversation data:', error);
-						}
-
+						} else return false;
+					} catch (error) {
+						console.error('Error fetching conversation data:', error);
 					}
+				};
 				if (activeID && checkAIResponse()) {
 					const response = await axios.post(
 						`http://localhost:5001/pushMessage/${activeID}`,
@@ -160,32 +171,6 @@ const StudentDashboard = () => {
 			fetchAIResponse();
 		}
 	}, [newConvo]);
-	//This is what refreshes after AI response
-	// useEffect(() => {
-	// 	const fetching = async () => {
-	// 		fetchAIResponse();
-	// 		const data = await fetchConversationData(activeID);
-	// 		setConvoMessages(data.conversation.messages);
-	// 	};
-	// 	const checkAIResponse = async () => {
-	// 		if (!newConvo){
-	// 			return false;
-	// 		}
-	// 		try {
-	// 		const data = await fetchConversationData(activeID);
-	// 		} catch (error) {
-	// 			console.error('Error fetching conversation data:', error);
-	// 		}
-	// 		if (data.conversation.messages.length === 1) {
-	// 			return true;
-	// 		}
-	// 		else return false;
-	// 	}
-
-	// 	if (!newConvo && checkAIResponse()) {
-	// 		fetching();
-	// 	}
-	// }, [newConvo]);
 
 	//This is what fetches sidebar
 	useEffect(() => {
@@ -377,6 +362,25 @@ const StudentDashboard = () => {
 								</div>
 							))}
 					</div>
+					<div>
+						{showAIModal && (
+							<div className="bg-gray-100 rounded-lg p-4 mb-4">
+								<p>
+									This response was from an AI generated to read the syllabus.
+									If this response was unhelpful, press yes to send it up to a
+									TA.
+								</p>
+								<div className="mt-4">
+									<button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+										Yes
+									</button>
+									<button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+										No
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
 					<div className="mt-auto">
 						<div className="flex items-center justify-between">
 							<textarea
@@ -401,5 +405,4 @@ const StudentDashboard = () => {
 		</>
 	);
 };
-
 export default StudentDashboard;
