@@ -93,6 +93,14 @@ const StudentDashboard = () => {
 		setIsOpen(false);
 	};
 
+	const AImodalyes = () => {
+		setIsOpen(true);
+	};
+
+	const AImodalno = () => {
+		setShowAIModal(false);
+	};
+
 	const chatClick = async (idx) => {
 		try {
 			const conversationId = firstMessages[idx].conversationId;
@@ -101,6 +109,7 @@ const StudentDashboard = () => {
 			setActiveID(conversationId);
 			setConvoMessages(data.conversation.messages);
 			setNewConvo(false);
+			setShowAIModal(false);
 			checkAIResponse(data);
 		} catch (error) {
 			console.error('Error fetching conversation data:', error);
@@ -108,6 +117,7 @@ const StudentDashboard = () => {
 	};
 
 	const makeNew = () => {
+		setShowAIModal(false);
 		setConvoMessages([]);
 		setNewConvo(true);
 	};
@@ -373,10 +383,16 @@ const StudentDashboard = () => {
 									TA.
 								</p>
 								<div className="mt-4">
-									<button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+									<button
+										className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+										onClick={AImodalyes}
+									>
 										Yes
 									</button>
-									<button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+									<button
+										className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+										onClick={AImodalno}
+									>
 										No
 									</button>
 								</div>
