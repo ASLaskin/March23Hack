@@ -8,6 +8,7 @@ import {
 	fetchConversationData,
 	fetchConversations,
 } from '../components/api.js';
+import { set } from 'mongoose';
 
 const socket = io('http://localhost:5001');
 
@@ -65,6 +66,8 @@ const taDashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
+				const firstMessagesData = await fetchConversations();
+				setFirstMessages(firstMessagesData);
 				const email = await fetchUserEmail();
 				console.log('User email fetched:', email);
 				setUserEmail(email);

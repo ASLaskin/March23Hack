@@ -419,7 +419,7 @@ const StudentDashboard = () => {
 				</div>
 			</div>
 
-			<Modal isOpen={isOpen} onClose={closeModal} />
+			<Modal isOpen={isOpen} onClose={closeModal} activeConversationID={activeID} />
 		</>
 	);
 };

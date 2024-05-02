@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const Modal = ({ isOpen, onClose }) => {
+const Modal = ({ isOpen, onClose,activeConversationID}) => {
     const [professors, setProfessors] = useState([]);
     const [teacherAssistants, setTeacherAssistants] = useState([]);
     const [selectedOption1, setSelectedOption1] = useState('');
@@ -37,9 +37,22 @@ const Modal = ({ isOpen, onClose }) => {
         setSelectedOption2(e.target.value);
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
+        try {
+            console.log(selectedOption2)
+            const response = await axios.post(
+                `http://localhost:5001/pushToTA/${selectedOption2}`, 
+                {
+                    conversationID: activeConversationID,
+                },
+                { withCredentials: true }
+            );
+            console.log('Response from pushToTA:', response.data);
+        } catch (error) {
+            console.error('Error pushing message up to TA:', error);
+        }
         onClose(); 
-    };
+    };    
 
     return (
         <>
