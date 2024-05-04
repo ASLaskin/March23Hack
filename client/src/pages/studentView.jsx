@@ -60,12 +60,16 @@ const StudentDashboard = ({ socket }) => {
 				setFirstMessage(userText);
 				const conversationId = response.data.conversationId;
 				setActiveID(conversationId);
-
-				//This is what sets it to the new conversation
 				const data = await fetchConversationData(conversationId);
 				setConvoMessages(data.conversation.messages);
-				checkAIResponse(data);
 				setTextBoxValue('');
+				await fetchAIResponse(conversationId);
+
+				const data2 = await fetchConversationData(conversationId);
+				setConvoMessages(data2.conversation.messages);
+				setShowAIModal(true);
+				
+				
 			} catch (error) {
 				console.error('Error creating conversation:', error);
 			}
@@ -79,6 +83,8 @@ const StudentDashboard = ({ socket }) => {
 				//Not the best way but it works
 				const data = await fetchConversationData(activeID);
 				setConvoMessages(data.conversation.messages);
+				//TODO: This might need to change because we still need a way to push message up if you add another message
+				setShowAIModal(false);
 				setTextBoxValue('');
 			} catch (error) {
 				console.error('Error pushing message:', error);
@@ -141,46 +147,23 @@ const StudentDashboard = ({ socket }) => {
 		fetchData();
 	}, [conversationPushed]);
 
-	useEffect(() => {
-		const fetchAIResponse = async () => {
-			try {
-				const AIResponse = {
+	const fetchAIResponse = async (conversationId) => {
+		try { 
+			const AIResponse = {
 					user: 'AI',
 					text: 'This isnt real',
 					time: Date.now(),
-				};
-				const checkAIResponse = async () => {
-					if (!newConvo) {
-						return false;
-					}
-					try {
-						const data = await fetchConversationData(activeID);
-						if (data.conversation.messages.length == 1) {
-							return true;
-						} else return false;
-					} catch (error) {
-						console.error('Error fetching conversation data:', error);
-					}
-				};
-				if (activeID && checkAIResponse()) {
-					const response = await axios.post(
-						`http://localhost:5001/pushMessage/${activeID}`,
-						{ text: AIResponse.text },
-						{ withCredentials: true }
-					);
-					console.log('AI response pushed:', response.data);
-					const data = await fetchConversationData(activeID);
-					setConvoMessages(data.conversation.messages);
-				}
-			} catch (error) {
+			};
+			const response = await axios.post(
+				`http://localhost:5001/pushMessage/${conversationId}`,
+				{ text: AIResponse.text },
+				{ withCredentials: true }
+			);
+			console.log('AI response pushed:', response.data);
+			}catch (error) {
 				console.error('Error fetching AI response:', error);
 			}
-		};
-
-		if (!newConvo && activeID) {
-			fetchAIResponse();
-		}
-	}, [newConvo]);
+	};
 
 	//This is what fetches sidebar
 	useEffect(() => {
@@ -410,4 +393,5 @@ const StudentDashboard = ({ socket }) => {
 		</>
 	);
 };
+
 export default StudentDashboard;
