@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../components/modal';
 import axios from 'axios';
-import io from 'socket.io-client';
 import { fetchConversations, signOut, fetchUserEmail } from '../components/api';
 
-const socket = io('http://localhost:5001');
 
-const TeacherDashboard = () => {
+const TeacherDashboard = ({socket}) => {
 	const [textBoxValue, setTextBoxValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [conversations, setConversations] = useState([]);

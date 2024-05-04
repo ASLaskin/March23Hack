@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
-import io from 'socket.io-client';
 import {
 	fetchUserEmail,
 	signOut,
 	fetchConversationData,
 	fetchConversations,
 } from '../components/api.js';
-import { set } from 'mongoose';
 
-const socket = io('http://localhost:5001');
 
-const taDashboard = () => {
+const taDashboard = ({socket}) => {
 	const [textBoxValue, setTextBoxValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
@@ -129,6 +126,19 @@ const taDashboard = () => {
 		const formattedDate = `${day}/${month}/${year}`;
 		return formattedDate;
 	};
+	//this needs socket io
+	const sendMessage = async () => {
+		try {
+			const response = await axios.post(
+				`http://localhost:5001/pushMessage/${activeID}`,
+				{ text: textBoxValue },
+				{ withCredentials: true }
+			);
+			console.log('New message pushed:', response.data);
+		} catch (error) {
+			console.error('Error pushing message:', error);
+		}
+	}
 
 	return (
 		<>
@@ -274,7 +284,7 @@ const taDashboard = () => {
 							<button
 								type="button"
 								className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
-								onClick={submitText}
+								onClick={sendMessage}
 							>
 								Submit
 							</button>

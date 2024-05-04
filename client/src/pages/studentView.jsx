@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Modal from '../components/modal';
-import io from 'socket.io-client';
 import {
 	fetchUserEmail,
 	signOut,
@@ -9,9 +8,7 @@ import {
 	fetchConversations,
 } from '../components/api.js';
 
-const socket = io('http://localhost:5001');
-
-const StudentDashboard = () => {
+const StudentDashboard = ({ socket }) => {
 	const [textBoxValue, setTextBoxValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
@@ -20,7 +17,6 @@ const StudentDashboard = () => {
 	const [newConvo, setNewConvo] = useState(true);
 	const [activeID, setActiveID] = useState();
 	const [conversationPushed, setConversationPushed] = useState(false);
-	const [messagePushed, setMessagePushed] = useState();
 
 	const [showAIModal, setShowAIModal] = useState(false);
 	//this is used to check to show AI Modal
@@ -80,8 +76,9 @@ const StudentDashboard = () => {
 					{ text: userText },
 					{ withCredentials: true }
 				);
-				setMessagePushed(true);
-				console.log('New message pushed:', response.data);
+				//Not the best way but it works
+				const data = await fetchConversationData(activeID);
+				setConvoMessages(data.conversation.messages);
 				setTextBoxValue('');
 			} catch (error) {
 				console.error('Error pushing message:', error);
@@ -171,8 +168,9 @@ const StudentDashboard = () => {
 						{ text: AIResponse.text },
 						{ withCredentials: true }
 					);
-					setMessagePushed(true);
 					console.log('AI response pushed:', response.data);
+					const data = await fetchConversationData(activeID);
+					setConvoMessages(data.conversation.messages);
 				}
 			} catch (error) {
 				console.error('Error fetching AI response:', error);
@@ -218,21 +216,6 @@ const StudentDashboard = () => {
 			socket.off('newConversation', handleNewConversation);
 		};
 	}, [firstMessages, socket]);
-
-	//Refreshes new messages displayed
-	useEffect(() => {
-		console.log('Message pushed:', messagePushed);
-		const handleNewMessage = (data) => {
-			console.log('New message received:', data);
-			setConvoMessages([...convoMessages, data.message]);
-		};
-
-		socket.on('newMessage', handleNewMessage);
-
-		return () => {
-			socket.off('newMessage', handleNewMessage);
-		};
-	}, [messagePushed, socket]);
 
 	const formatTime = (param) => {
 		const timestamp = new Date(param);
@@ -419,7 +402,11 @@ const StudentDashboard = () => {
 				</div>
 			</div>
 
-			<Modal isOpen={isOpen} onClose={closeModal} activeConversationID={activeID} />
+			<Modal
+				isOpen={isOpen}
+				onClose={closeModal}
+				activeConversationID={activeID}
+			/>
 		</>
 	);
 };

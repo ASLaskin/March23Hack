@@ -7,10 +7,11 @@ const MongoStore = require('connect-mongo')(session);
 const http = require('http');
 const socketIo = require('socket.io');
 const app = express();
-const server = http.createServer(app); // Create an HTTP server with Express app
+const server = http.createServer(app);
+
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173", // Adjust origin based on your client app
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -68,7 +69,9 @@ server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log('A client connected');
-
+    socket.on('newConversation', () => {
+        console.log('New conversation:');
+    });
     socket.on('disconnect', () => {
         console.log('A client disconnected');
     });

@@ -149,6 +149,7 @@ router.get('/users/professors', async (req, res) => {
 
 router.post('/pushConversation', async (req, res) => {
     try {
+        
         const words = req.body.text;
         const userId = req.session.userId;
 
@@ -173,8 +174,9 @@ router.post('/pushConversation', async (req, res) => {
         user.conversationsIDs.push(newConversation._id);
         await user.save();
 
-        // Real time database
+
         io.emit('newConversation', { conversationId: newConversation._id });
+        console.log('io emitted newConversation event');
 
         res.status(201).json({ message: 'Conversation created successfully', conversationId: newConversation._id });
     } catch (error) {
@@ -185,6 +187,7 @@ router.post('/pushConversation', async (req, res) => {
 
 router.post('/pushMessage/:conversationId', async (req, res) => {
     try {
+        console.log('this ran')
         const conversationId = req.params.conversationId;
         const words = req.body.text;
         const userId = req.session.userId;
@@ -201,8 +204,6 @@ router.post('/pushMessage/:conversationId', async (req, res) => {
         if (!conversation) {
             return res.status(404).json({ error: 'Conversation not found' });
         }
-
-        // Push message, user, and timestamp into the conversation
         conversation.messages.push({
             text: words,
             user: user.email,
@@ -210,11 +211,6 @@ router.post('/pushMessage/:conversationId', async (req, res) => {
         });
 
         await conversation.save();
-
-        // Real time database
-
-        io.emit('fetchMessages', { conversationId: conversationId, message: words });
-
         res.status(201).json({ message: 'Message added to conversation successfully' });
     } catch (error) {
         console.error(error);
