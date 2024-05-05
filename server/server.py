@@ -1,17 +1,17 @@
 from flask import Flask, request, jsonify
-from AI_WORK import generate_answer
+from updated_AI import AI
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.json  # Assuming JSON data is sent from the frontend
+    data = request.json  # Get data sent from frontend
+    user_input = data.get('userInput')  # Extract user input from data
     # Process data using your AI function
-    response = generate_answer(data)
-    # Store data in MongoDB
-    # mongo.db.collection.insert_one(response)
-    return jsonify(response)
+    response = AI(user_input)
+    return jsonify({'result': response})  # Send response back to frontend
 
 if __name__ == '__main__':
     app.run(debug=True)
-    print("Flask Server is running...")

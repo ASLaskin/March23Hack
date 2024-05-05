@@ -62,8 +62,7 @@ const StudentDashboard = ({ socket }) => {
 				const data = await fetchConversationData(conversationId);
 				setConvoMessages(data.conversation.messages);
 				setTextBoxValue('');
-				await fetchAIResponse(conversationId);
-
+				await fetchAIResponse(conversationId,userText);
 				const data2 = await fetchConversationData(conversationId);
 				setConvoMessages(data2.conversation.messages);
 				setShowAIModal(true);
@@ -147,22 +146,27 @@ const StudentDashboard = ({ socket }) => {
 		fetchData();
 	}, [conversationPushed]);
 
-	const fetchAIResponse = async (conversationId) => {
-		try { 
-			const AIResponse = {
-					user: 'AI',
-					text: 'This isnt real',
-					time: Date.now(),
-			};
+	const fetchAIResponse = async (conversationId, userInput) => {
+		try {
+			// Fetch AI response from Flask server
+			const AIresponse = await axios.post(
+				'http://localhost:5000/predict',
+				{ userInput: userInput },
+			);
+	
+			console.log('AI response fetched:', AIresponse.data.result);
+	
+			// Push AI response to another endpoint
 			const response = await axios.post(
 				`http://localhost:5001/pushMessage/${conversationId}`,
-				{ text: AIResponse.text },
+				{ text: AIresponse.data.result },
 				{ withCredentials: true }
 			);
+	
 			console.log('AI response pushed:', response.data);
-			}catch (error) {
-				console.error('Error fetching AI response:', error);
-			}
+		} catch (error) {
+			console.error('Error fetching AI response:', error);
+		}
 	};
 
 	//This is what fetches sidebar
