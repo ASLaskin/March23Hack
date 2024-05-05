@@ -28,6 +28,11 @@ const taDashboard = ({socket}) => {
 					{ withCredentials: true }
 				);
 				setMessagePushed(true);
+				const conversationId = response.data.conversationId;
+				setActiveID(conversationId);
+				const data = await fetchConversationData(conversationId);
+				setConvoMessages(data.conversation.messages);
+				set(textBoxValue, '');
 				console.log('New message pushed:', response.data);
 			} catch (error) {
 				console.error('Error pushing message:', error);
