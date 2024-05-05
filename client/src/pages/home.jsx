@@ -87,7 +87,7 @@ const Home = () => {
 						<ul className="flex flex-col p-4 md:p-0 mt-4 font-medium border rounded-lg md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
 							<li>
 								<a
-									href="#"
+									href="/"
 									className="block py-2 px-3 text-white rounded md:bg-transparent md:p-0"
 									aria-current="page"
 								>
@@ -96,7 +96,7 @@ const Home = () => {
 							</li>
 							<li>
 								<a
-									href="#"
+									href="/about"
 									className="block py-2 px-3 text-white rounded md:p-0"
 								>
 									About
@@ -122,12 +122,14 @@ const Home = () => {
 						>
 							Get Started
 						</button>
+						<Link to="/about">
 						<button
 							type="button"
 							className="text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
 						>
 							Learn More
 						</button>
+						</Link>
 					</div>
 				</div>
 			</div>

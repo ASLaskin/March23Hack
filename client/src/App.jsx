@@ -16,6 +16,7 @@ function App() {
         <Route path="/student" element={<Pages.StudentDashboard socket={socket} />} />
         <Route path="/teacher" element={<Pages.TeacherDashboard socket={socket} />} />
         <Route path="/ta" element={<Pages.TaDashboard socket={socket} />} />
+        <Route path="/about" element={<Pages.AboutPage />} />
       </Routes>
     </Router>
   );
