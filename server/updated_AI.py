@@ -44,5 +44,10 @@ def AI(question):
 
 # Example usage
 question = "what is the slack answer time?"
+#What is the preferred communication channel for course-related questions
+#what is the slack response time
+#Where should students seek help for projects or quizzes?
+#Who should I ask for debugging requests?
+
 answer = AI(question)
 print("Answer:", answer)
