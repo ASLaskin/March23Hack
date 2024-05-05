@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import Modal from '../components/modal';
 import axios from 'axios';
-import { fetchConversations, signOut, fetchUserEmail } from '../components/api';
+import {
+	fetchConversations,
+	fetchConversationData,
+	signOut,
+	fetchUserEmail,
+} from '../components/api';
 
-
-const TeacherDashboard = ({socket}) => {
+const TeacherDashboard = ({ socket }) => {
 	const [textBoxValue, setTextBoxValue] = useState('');
-	const [isOpen, setIsOpen] = useState(false);
-	const [conversations, setConversations] = useState([]);
 	const [userEmail, setUserEmail] = useState('');
+	const [activeID, setActiveID] = useState(false);
+	const [firstMessages, setFirstMessages] = useState([]);
+	const [convoMessages, setConvoMessages] = useState([]);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
+				const conversationData = await fetchConversations();
+				setFirstMessages(conversationData);
 				const email = await fetchUserEmail();
+				console.log('User email fetched:', email);
 				setUserEmail(email);
+				console.log('First messages:', firstMessages);
 			} catch (error) {
 				console.error('Error fetching email:', error);
 			}
@@ -23,25 +31,24 @@ const TeacherDashboard = ({socket}) => {
 		fetchData();
 	}, []);
 
-	useEffect(() => {
-		const fetchData = async () => {
+	const submitText = async () => {
+		const userText = textBoxValue;
+		if (activeID) {
 			try {
-				const conversationData = await fetchConversations();
-				setConversations(conversationData);
+				const response = await axios.post(
+					`http://localhost:5001/pushMessage/${activeID}`,
+					{ text: userText },
+					{ withCredentials: true }
+				);
+				const data = await fetchConversationData(activeID);
+				setConvoMessages(data.conversation.messages);
+				setTextBoxValue('');
+				alert('Message sent');
+				console.log('New message pushed:', response.data);
 			} catch (error) {
-				console.error('Error fetching conversations:', error);
+				console.error('Error pushing message:', error);
 			}
-		};
-
-		fetchData();
-	}, []);
-
-	const submitText = () => {
-		setIsOpen(true);
-	};
-
-	const closeModal = () => {
-		setIsOpen(false);
+		}
 	};
 
 	const handleSignOut = async () => {
@@ -61,6 +68,18 @@ const TeacherDashboard = ({socket}) => {
 
 		const formattedDate = `${day}/${month}/${year}`;
 		return formattedDate;
+	};
+
+	const chatClick = async (idx) => {
+		try {
+			const conversationId = firstMessages[idx].conversationId;
+			const data = await fetchConversationData(conversationId);
+			console.log('Conversation data fetched:', data);
+			setActiveID(conversationId);
+			setConvoMessages(data.conversation.messages);
+		} catch (error) {
+			console.error('Error fetching conversation data:', error);
+		}
 	};
 
 	return (
@@ -186,50 +205,77 @@ const TeacherDashboard = ({socket}) => {
 						<ul class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
 							{/* TODO:IMPLEMENT THIS TO MAP TAS  */}
 							<a className="text-black ">Current TA's</a>
-							<li>Andrew Laskin</li>
-							<li>Andrew Laskin</li>
-							<li>Andrew Laskin</li>
+							<li>andrewlaskin@ufl.edu</li>
+							<li>ta@ufl.edu</li>
 						</ul>
 						<line class="block w-full h-0.5 bg-gray-200 dark:bg-gray-700"></line>
 						<li>Student Messages</li>
 						<ul className="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400">
-							{conversations.length === 0 ? (
+							{firstMessages.length === 0 ? (
 								<li>No conversations at this time</li>
 							) : (
-								conversations.map((conversation) => (
-									<li key={conversation._id}>{conversation.user}</li>
+								firstMessages.map((conversation, idx) => (
+									<a
+										key={idx}
+										onClick={() => chatClick(idx)}
+										className="hover:underline cursor-pointer"
+									>
+										<li>{conversation.firstMessage}</li>
+									</a>
 								))
 							)}
 						</ul>
 					</ul>
 				</div>
 			</aside>
+
 			<div className="p-4 sm:ml-64">
 				<div
-					className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14 flex flex-col-reverse"
+					className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14 flex flex-col"
 					style={{ height: 'calc(100vh - 60px)' }}
 				>
-					<div className="flex items-center justify-between">
-						{/* TODO:Conditionally render this only when activechat */}
-						<textarea
-							className="text-black left-4 w-full h-16 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-							placeholder="This should be rendered only when a conversation is selected"
-							value={textBoxValue}
-							onChange={(e) => setTextBoxValue(e.target.value)}
-						></textarea>
-
-						{/* Submit button */}
-						<button
-							type="button"
-							className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
-							onClick={submitText}
-						>
-							Submit
-						</button>
+					<div
+						className="flex flex-col-reverse overflow-y-auto conversation-messages"
+						style={{ maxHeight: 'calc(100% - 60px - 3rem)' }}
+					>
+						{convoMessages
+							.slice()
+							.reverse()
+							.map((message, index) => (
+								<div key={index} className="bg-gray-100 rounded-lg p-4 mb-4">
+									<div className="flex justify-between">
+										<div>
+											<p className="font-bold">{message.user}</p>
+											<p className="mt-2">{message.text}</p>
+										</div>
+										<p className="text-sm text-gray-500">
+											{formatTime(message.time)}
+										</p>
+									</div>
+								</div>
+							))}
 					</div>
+					{activeID && (
+						<div className="mt-auto">
+							<div className="flex items-center justify-between">
+								<textarea
+									className="text-black w-full h-16 border border-gray-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+									placeholder="Type something here..."
+									value={textBoxValue}
+									onChange={(e) => setTextBoxValue(e.target.value)}
+								></textarea>
+								<button
+									type="button"
+									className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
+									onClick={submitText}
+								>
+									Submit
+								</button>
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
-			<Modal isOpen={isOpen} onClose={closeModal} />
 		</>
 	);
 };

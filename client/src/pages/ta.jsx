@@ -30,7 +30,7 @@ const taDashboard = ({ socket }) => {
 				setMessagePushed(true);
 				const data = await fetchConversationData(activeID);
 				setConvoMessages(data.conversation.messages);
-				set(textBoxValue, '');
+				setTextBoxValue('');
 				console.log('New message pushed:', response.data);
 			} catch (error) {
 				console.error('Error pushing message:', error);
@@ -112,8 +112,12 @@ const taDashboard = ({ socket }) => {
 
 	const profYes = async () => {
 		setIsOpen(false);
+		try {
 		const response = await axios.post(`http://localhost:5001/pushToProf/${activeID}`);
-		alert('Pushed to professor:', response.data);
+		alert('Pushed to professor:');
+		} catch (error) {
+			console.error('Error pushing message up to professor:', error);
+		}
 	};
 	const profNo =  () => {
 		setIsOpen(false);
