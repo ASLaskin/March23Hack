@@ -97,6 +97,7 @@ const StudentDashboard = ({ socket }) => {
 
 	const AImodalyes = () => {
 		setIsOpen(true);
+		setShowAIModal(false);
 	};
 
 	const AImodalno = () => {

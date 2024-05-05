@@ -287,5 +287,22 @@ router.post('/pushToTA/:userName', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+router.post('/pushToProf/:conversationID', async (req, res) => {
+    try {
+        const conversationID = req.params.conversationID;
+        const user = await User.findOne({ role: 'professor' });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        user.conversationsIDs.push(conversationID);
+        await user.save();
+
+        res.status(200).json({ message: 'Success!' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    };
+});
 
 module.exports = router;

@@ -28,9 +28,7 @@ const taDashboard = ({ socket }) => {
 					{ withCredentials: true }
 				);
 				setMessagePushed(true);
-				const conversationId = response.data.conversationId;
-				setActiveID(conversationId);
-				const data = await fetchConversationData(conversationId);
+				const data = await fetchConversationData(activeID);
 				setConvoMessages(data.conversation.messages);
 				set(textBoxValue, '');
 				console.log('New message pushed:', response.data);
@@ -100,27 +98,6 @@ const taDashboard = ({ socket }) => {
 		};
 	}, [firstMessages]);
 
-	useEffect(() => {
-		console.log('this triggered');
-		if (activeID) {
-			const fetchMessages = async () => {
-				try {
-					const response = await axios.get(
-						`http://localhost:5001/conversationData/${activeID}`
-					);
-					console.log('Messages fetched:', response.data);
-					setConvoMessages((prevMessages) => [
-						...prevMessages,
-						...response.data.conversation.messages,
-					]);
-					setMessagePushed(false);
-				} catch (error) {
-					console.error('Error fetching messages:', error);
-				}
-			};
-			fetchMessages();
-		}
-	}, [messagePushed]);
 
 	const formatTime = (param) => {
 		const timestamp = new Date(param);
@@ -131,24 +108,14 @@ const taDashboard = ({ socket }) => {
 		const formattedDate = `${day}/${month}/${year}`;
 		return formattedDate;
 	};
-	//this needs socket io
-	const sendMessage = async () => {
-		try {
-			const response = await axios.post(
-				`http://localhost:5001/pushMessage/${activeID}`,
-				{ text: textBoxValue },
-				{ withCredentials: true }
-			);
-			console.log('New message pushed:', response.data);
-		} catch (error) {
-			console.error('Error pushing message:', error);
-		}
-	};
+
 
 	const profYes = async () => {
-		setIsOpen(true);
+		setIsOpen(false);
+		const response = await axios.post(`http://localhost:5001/pushToProf/${activeID}`);
+		alert('Pushed to professor:', response.data);
 	};
-	const profNo = async () => {
+	const profNo =  () => {
 		setIsOpen(false);
 	};
 
@@ -304,6 +271,7 @@ const taDashboard = ({ socket }) => {
 							</div>
 						</div>
 					)}
+					{activeID && (
 					<div className="mt-auto">
 						<div className="flex items-center justify-between">
 							<textarea
@@ -315,12 +283,13 @@ const taDashboard = ({ socket }) => {
 							<button
 								type="button"
 								className="text-white bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:focus:ring-blue-800"
-								onClick={sendMessage}
+								onClick={submitText}
 							>
 								Submit
 							</button>
 						</div>
 					</div>
+				)}
 				</div>
 			</div>
 

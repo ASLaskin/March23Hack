@@ -52,6 +52,7 @@ const Modal = ({ isOpen, onClose,activeConversationID}) => {
             console.error('Error pushing message up to TA:', error);
         }
         onClose(); 
+        alert('Message sent to TA');
     };    
 
     return (
