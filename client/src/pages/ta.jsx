@@ -8,8 +8,7 @@ import {
 	fetchConversations,
 } from '../components/api.js';
 
-
-const taDashboard = ({socket}) => {
+const taDashboard = ({ socket }) => {
 	const [textBoxValue, setTextBoxValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [userEmail, setUserEmail] = useState('');
@@ -17,6 +16,7 @@ const taDashboard = ({socket}) => {
 	const [convoMessages, setConvoMessages] = useState([]);
 	const [activeID, setActiveID] = useState(null);
 	const [messagePushed, setMessagePushed] = useState();
+	const [showProfModal, setShowProfModal] = useState(false);
 
 	const submitText = async () => {
 		const userText = textBoxValue;
@@ -51,7 +51,7 @@ const taDashboard = ({socket}) => {
 			console.log('Conversation data fetched:', data);
 			setActiveID(conversationId);
 			setConvoMessages(data.conversation.messages);
-			setNewConvo(false);
+			setShowProfModal(true);
 		} catch (error) {
 			console.error('Error fetching conversation data:', error);
 		}
@@ -143,7 +143,14 @@ const taDashboard = ({socket}) => {
 		} catch (error) {
 			console.error('Error pushing message:', error);
 		}
-	}
+	};
+
+	const profYes = async () => {
+		setIsOpen(true);
+	};
+	const profNo = async () => {
+		setIsOpen(false);
+	};
 
 	return (
 		<>
@@ -278,6 +285,25 @@ const taDashboard = ({socket}) => {
 								</div>
 							))}
 					</div>
+					{showProfModal && (
+						<div className="bg-gray-100 rounded-lg p-4 mb-4">
+							<h1>Push up to coresponding Professor?</h1>
+							<div className="mt-4">
+								<button
+									className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+									onClick={profYes}
+								>
+									Yes
+								</button>
+								<button
+									className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+									onClick={profNo}
+								>
+									No
+								</button>
+							</div>
+						</div>
+					)}
 					<div className="mt-auto">
 						<div className="flex items-center justify-between">
 							<textarea

@@ -17,9 +17,8 @@ const StudentDashboard = ({ socket }) => {
 	const [newConvo, setNewConvo] = useState(true);
 	const [activeID, setActiveID] = useState();
 	const [conversationPushed, setConversationPushed] = useState(false);
-
 	const [showAIModal, setShowAIModal] = useState(false);
-	//this is used to check to show AI Modal
+
 
 	//This is used to send it to the AI to get a response
 	const [firstMessage, setFirstMessage] = useState('');
