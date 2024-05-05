@@ -28,8 +28,8 @@ all_text=all_text.strip()
 print(all_text)
 
 question = ("what is slack answer time?")
-context = "BERT-large is really big... it has 24-layers and an embedding size of 1,024, for a total of 340M parameters! Altogether it is 1.34GB, so expect it to take a couple minutes to download to your Colab instance."
-# context="Course Communication, Office Hours, and Code Review Policy 3. Use course slack or office hours for all course related communication. For any personal communication such as accommodations request, you can use emails, but we will not answer course related questions such as debugging requests on email. Note that we do not respond to Canvas messages as we prefer to keep all communications in one place. 4. We typically answer queries on Slack within 48 business hours. 5. Students should visit the course staff during scheduled office hours for help on projects or quizzes. Debugging requests for projects/quiz questions must first go through the TAs or peer mentors. This is strongly encouraged given we have a large class and several of you might have similar questions. If your problem is not fixed, then discuss with the instructor during their office hours. Debugging requests to the instructor as a direct message on Slack or an email will be ignored if you do not follow the above protocol."
+# context = "BERT-large is really big... it has 24-layers and an embedding size of 1,024, for a total of 340M parameters! Altogether it is 1.34GB, so expect it to take a couple minutes to download to your Colab instance."
+context="Course Communication, Office Hours, and Code Review Policy 3. Use course slack or office hours for all course related communication. For any personal communication such as accommodations request, you can use emails, but we will not answer course related questions such as debugging requests on email. Note that we do not respond to Canvas messages as we prefer to keep all communications in one place. 4. We typically answer queries on Slack within 48 business hours. 5. Students should visit the course staff during scheduled office hours for help on projects or quizzes. Debugging requests for projects/quiz questions must first go through the TAs or peer mentors. This is strongly encouraged given we have a large class and several of you might have similar questions. If your problem is not fixed, then discuss with the instructor during their office hours. Debugging requests to the instructor as a direct message on Slack or an email will be ignored if you do not follow the above protocol."
 
 weight_path = "kaporter/bert-base-uncased-finetuned-squad"
 # loading tokenizer
@@ -65,4 +65,4 @@ answer_end = torch.argmax(end_logits)
 ans = ''.join(tokens[answer_start:answer_end])
 print('Predicted answer:', ans)
 
-print("Jesus4")
+# print("Jesus4")
