@@ -32,8 +32,28 @@ def split_text(text, max_length, tokenizer):
         yield ' '.join(current_chunk)
 
 
+# with open("qa_dataset.json", "r") as f:
+#     qa_dataset = json.load(f)
+
+# Extract syllabus text
+syllabus_text = extract_text_from_pdf("syllabi/syllabus2.pdf")
+
+context = syllabus_text
+
+# Use the QA dataset to answer questions
+
+# question = qa_pair["question"]
+# expected_answer = qa_pair["answer"]
+
+# answer = answer_question(question, context, tokenizer, model)
+# print(f"Q: {question}")
+# print(f"Expected A: {expected_answer}")
+# print(f"Model A: {answer}\n")
+
 # Function to answer questions using BERT
-def answer_question(question, context, tokenizer, model):
+def answer_question(question):
+# def answer_question(question, context, tokenizer, model):
+
     max_chunk_length = 400
     context_chunks = list(split_text(context, max_chunk_length, tokenizer))
 
@@ -69,29 +89,29 @@ def answer_question(question, context, tokenizer, model):
     return best_answer
 
 
-if __name__ == "__main__":
-    # Load pre-trained BERT model and tokenizer
-    model_name = "bert-large-uncased-whole-word-masking-finetuned-squad"
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-    model = BertForQuestionAnswering.from_pretrained(model_name)
 
-    # Load the QA dataset
-    with open("qa_dataset.json", "r") as f:
-        qa_dataset = json.load(f)
+# Load pre-trained BERT model and tokenizer
+model_name = "bert-large-uncased-whole-word-masking-finetuned-squad"
+tokenizer = BertTokenizer.from_pretrained(model_name)
+model = BertForQuestionAnswering.from_pretrained(model_name)
 
-    # Extract syllabus text
-    syllabus_text = extract_text_from_pdf("syllabi/syllabus2.pdf")
+# Load the QA dataset
+with open("qa_dataset.json", "r") as f:
+    qa_dataset = json.load(f)
 
-    # Use the QA dataset to answer questions
-    for qa_pair in qa_dataset:
-        context = syllabus_text
-        question = qa_pair["question"]
-        expected_answer = qa_pair["answer"]
+# Extract syllabus text
+syllabus_text = extract_text_from_pdf("syllabi/syllabus2.pdf")
 
-        answer = answer_question(question, context, tokenizer, model)
-        print(f"Q: {question}")
-        print(f"Expected A: {expected_answer}")
-        print(f"Model A: {answer}\n")
+# Use the QA dataset to answer questions
+for qa_pair in qa_dataset:
+    context = syllabus_text
+    question = qa_pair["question"]
+    expected_answer = qa_pair["answer"]
+
+    answer = answer_question(question, context, tokenizer, model)
+    print(f"Q: {question}")
+    print(f"Expected A: {expected_answer}")
+    print(f"Model A: {answer}\n")
 
 
 """
