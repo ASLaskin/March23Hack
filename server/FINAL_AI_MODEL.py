@@ -108,7 +108,7 @@ for qa_pair in qa_dataset:
     question = qa_pair["question"]
     expected_answer = qa_pair["answer"]
 
-    answer = answer_question(question, context, tokenizer, model)
+    answer = answer_question(question)
     print(f"Q: {question}")
     print(f"Expected A: {expected_answer}")
     print(f"Model A: {answer}\n")
