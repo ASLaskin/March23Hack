@@ -7,7 +7,7 @@ import warnings
 warnings.simplefilter("ignore")
 
 def AI(question):
-    file = "syllabus.pdf"
+    file = "syllabi/syllabus.pdf"
     all_text = ''
     with pdfplumber.open(file) as pdf:
         for pdf_page in pdf.pages:
